@@ -15,7 +15,10 @@ public final class ModCreativeTabs {
         TABS.register("main", () -> CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.simply_light_smart.main"))
                 .icon(ModBlocks::creativeTabIcon)
-                .displayItems((parameters, output) -> ModBlocks.addDimmerItems(output))
+                .displayItems((parameters, output) -> {
+                    ModBlocks.addDimmerItems(output);
+                    output.accept(ModItems.SMART_LINKER.get());
+                })
                 .build());
     }
 

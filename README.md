@@ -34,6 +34,33 @@ oito blocos dimerizaveis da mesma familia e cor. As variantes invertidas usam
 o mesmo padrao 3x3, com uma redstone torch no centro: podem partir de oito
 blocos dimerizaveis normais ou diretamente de oito luzes do Simply Light.
 
+## Smart Switch e Linker
+
+O **Smart Switch** recebe redstone e repassa o mesmo nível de sinal para até
+64 dimmers vinculados, em um alcance físico de 128 blocos. Enquanto vinculado,
+o dimmer ignora seu redstone local. A integração com sublevels Sable é
+opcional; sem Sable, o comportamento vanilla permanece igual.
+
+### Uso
+
+1. Coloque um Smart Switch e conecte a fonte de redstone.
+2. Segure o Smart Linker e clique com o botão direito nos dimmers desejados.
+   Um novo clique remove o alvo da seleção.
+   Use Shift + clique esquerdo no ar para limpar toda a seleção atual.
+3. Com Shift pressionado, clique com o botão direito no Smart Switch para
+   substituir a lista de vínculos. Aplicar uma seleção vazia remove todos os
+   vínculos.
+
+O Linker mostra a quantidade selecionada e destaca os alvos com um contorno
+verde. Um dimmer não pode pertencer a dois switches.
+
+### Fabricação
+
+- **Smart Switch:** ferro e redstone como estrutura, com comparator,
+  ender pearl e repeater (`I C I / R E R / I P I`).
+- **Smart Linker:** redstone torch, lingote de ferro e fragmento de ametista
+  em diagonal (`  R / I / A  `).
+
 ## Luz colorida com shaders
 
 Shaders atribuem perfis de luz colorida pelo ID do bloco. Para que

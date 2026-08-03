@@ -30,6 +30,21 @@ outra copia do mesmo shaderpack, informe o caminho:
 .\tools\apply-euphoria-colored-lighting.ps1 -ShaderPackPath 'C:\caminho\para\o\shaderpack'
 ```
 
+Ao testar em uma instancia CurseForge com Sable, aplique a integracao **na
+copia do shaderpack dessa instancia**, nao apenas em `run/`. Por exemplo:
+
+```powershell
+.\tools\apply-euphoria-colored-lighting.ps1 `
+  -InstancePath 'C:\Users\lucca\curseforge\minecraft\Instances\Create Ult. Sel. Custom - 11.0.0'
+```
+
+Sable reutiliza a tabela de IDs de blocos do Iris para renderizar os sublevels.
+Portanto, nao ha um arquivo de shader especifico do Sable a editar: se os IDs
+`simply_light_smart:*` nao estiverem em `shaders/block.properties` na copia
+ativa do shaderpack, as lampadas do addon usam luz neutra tambem no sublevel.
+O script cria backups antes da primeira alteracao e pode ser executado de novo
+com seguranca.
+
 O arquivo original e preservado ao lado de `block.properties` com o sufixo
 `.simply-light-smart-backup`. Recarregue o shaderpack (ou reinicie o cliente)
 depois de aplicar a integracao.

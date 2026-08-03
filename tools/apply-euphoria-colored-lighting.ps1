@@ -9,8 +9,23 @@ creates backups beside the edited shader property files before changing them.
 #>
 [CmdletBinding()]
 param(
-    [string]$ShaderPackPath = (Join-Path $PSScriptRoot "..\run\shaderpacks\ComplementaryReimagined_r5.8.1 + EuphoriaPatches_1.9.3")
+    # Exact shaderpack directory. Takes precedence over -InstancePath.
+    [string]$ShaderPackPath,
+    # CurseForge/Minecraft instance directory. This avoids accidentally editing
+    # the development run/ copy when testing features such as Sable sublevels.
+    [string]$InstancePath,
+    [string]$ShaderPackName = "ComplementaryReimagined_r5.8.1 + EuphoriaPatches_1.9.3"
 )
+
+if ([string]::IsNullOrWhiteSpace($ShaderPackPath)) {
+    $shaderRoot = if ([string]::IsNullOrWhiteSpace($InstancePath)) {
+        Join-Path $PSScriptRoot "..\run\shaderpacks"
+    }
+    else {
+        Join-Path $InstancePath "shaderpacks"
+    }
+    $ShaderPackPath = Join-Path $shaderRoot $ShaderPackName
+}
 
 $blockPropertiesPath = Join-Path $ShaderPackPath "shaders\block.properties"
 $itemPropertiesPath = Join-Path $ShaderPackPath "shaders\item.properties"

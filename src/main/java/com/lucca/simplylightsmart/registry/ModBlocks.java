@@ -4,12 +4,16 @@ import com.lucca.simplylightsmart.SimplyLightSmart;
 import com.lucca.simplylightsmart.block.DimmerFixture;
 import com.lucca.simplylightsmart.block.DimmerLightBulb;
 import com.lucca.simplylightsmart.block.DimmerThinLamp;
+import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
 import java.util.EnumMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
@@ -35,6 +39,14 @@ public final class ModBlocks {
     private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_PANELS = new EnumMap<>(DyeColor.class);
     private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_FIXTURES = new EnumMap<>(DyeColor.class);
     private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_FIXTURES = new EnumMap<>(DyeColor.class);
+
+    public static final DeferredBlock<SmartSwitchBlock> SMART_SWITCH = BLOCKS.register("smart_switch", () ->
+            new SmartSwitchBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()));
+    public static final DeferredItem<BlockItem> SMART_SWITCH_ITEM = ITEMS.registerSimpleBlockItem("smart_switch", SMART_SWITCH);
 
     static {
         for (DyeColor color : DyeColor.values()) {
@@ -70,6 +82,7 @@ public final class ModBlocks {
         addItems(output, INVERTED_DIMMER_PANELS);
         addItems(output, DIMMER_FIXTURES);
         addItems(output, INVERTED_DIMMER_FIXTURES);
+        output.accept(SMART_SWITCH_ITEM.get());
     }
 
     public static Block[] dimmerBlocks() {

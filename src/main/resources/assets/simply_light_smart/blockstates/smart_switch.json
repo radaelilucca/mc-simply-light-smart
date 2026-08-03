@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "simply_light_smart:block/smart_switch" }
+  }
+}

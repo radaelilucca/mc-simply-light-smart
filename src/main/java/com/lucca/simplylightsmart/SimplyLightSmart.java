@@ -1,7 +1,10 @@
 package com.lucca.simplylightsmart;
 
 import com.lucca.simplylightsmart.registry.ModBlocks;
+import com.lucca.simplylightsmart.registry.ModBlockEntities;
 import com.lucca.simplylightsmart.registry.ModCreativeTabs;
+import com.lucca.simplylightsmart.registry.ModDataComponents;
+import com.lucca.simplylightsmart.registry.ModItems;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -14,7 +17,10 @@ public final class SimplyLightSmart {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public SimplyLightSmart(IEventBus modEventBus) {
+        ModDataComponents.register(modEventBus);
         ModBlocks.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
+        ModItems.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         LOGGER.info("Simply Light - Smart! loaded");
     }
