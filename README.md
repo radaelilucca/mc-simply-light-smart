@@ -1,7 +1,7 @@
 # Simply Lights Toggle Addon
 
 Addon NeoForge para Minecraft 1.21.1 que acrescenta versões dimerizáveis das
-famílias Bulbs, Illuminant Slabs, Illuminant Panels e Wall Lamps do
+famílias Bulbs, Illuminant Slabs, Illuminant Panels e Fixtures do
 [Simply Light](https://www.curseforge.com/minecraft/mc-mods/simply-light).
 
 Cada cor possui uma variante normal e uma invertida. A intensidade de emissão é

@@ -11,10 +11,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -42,8 +43,8 @@ public final class ModBlocks {
             registerBlock("dimmer_illuminant_slab", color, true, INVERTED_DIMMER_SLABS, (dyeColor, inverted) -> new DimmerThinLamp(8, dyeColor, inverted));
             registerBlock("dimmer_illuminant_panel", color, false, DIMMER_PANELS, (dyeColor, inverted) -> new DimmerThinLamp(4, dyeColor, inverted));
             registerBlock("dimmer_illuminant_panel", color, true, INVERTED_DIMMER_PANELS, (dyeColor, inverted) -> new DimmerThinLamp(4, dyeColor, inverted));
-            registerBlock("dimmer_wall_lamp", color, false, DIMMER_FIXTURES, DimmerFixture::new);
-            registerBlock("dimmer_wall_lamp", color, true, INVERTED_DIMMER_FIXTURES, DimmerFixture::new);
+            registerBlock("dimmer_fixture", color, false, DIMMER_FIXTURES, DimmerFixture::new);
+            registerBlock("dimmer_fixture", color, true, INVERTED_DIMMER_FIXTURES, DimmerFixture::new);
         }
     }
 
@@ -55,19 +56,27 @@ public final class ModBlocks {
         ITEMS.register(modEventBus);
     }
 
-    public static void addBulbsToCreativeTab(BuildCreativeModeTabContentsEvent event) {
-        DIMMER_BULBS.values().forEach(event::accept);
-        INVERTED_DIMMER_BULBS.values().forEach(event::accept);
-        DIMMER_SLABS.values().forEach(event::accept);
-        INVERTED_DIMMER_SLABS.values().forEach(event::accept);
-        DIMMER_PANELS.values().forEach(event::accept);
-        INVERTED_DIMMER_PANELS.values().forEach(event::accept);
-        DIMMER_FIXTURES.values().forEach(event::accept);
-        INVERTED_DIMMER_FIXTURES.values().forEach(event::accept);
+    public static ItemStack creativeTabIcon() {
+        return DIMMER_BULBS.get(DyeColor.WHITE).get().getDefaultInstance();
+    }
+
+    public static void addDimmerItems(CreativeModeTab.Output output) {
+        addItems(output, DIMMER_BULBS);
+        addItems(output, INVERTED_DIMMER_BULBS);
+        addItems(output, DIMMER_SLABS);
+        addItems(output, INVERTED_DIMMER_SLABS);
+        addItems(output, DIMMER_PANELS);
+        addItems(output, INVERTED_DIMMER_PANELS);
+        addItems(output, DIMMER_FIXTURES);
+        addItems(output, INVERTED_DIMMER_FIXTURES);
     }
 
     public static Block[] dimmerBlocks() {
         return DIMMER_BLOCKS.stream().map(DeferredBlock::get).toArray(Block[]::new);
+    }
+
+    private static void addItems(CreativeModeTab.Output output, Map<DyeColor, DeferredItem<BlockItem>> items) {
+        items.values().forEach(item -> output.accept(item.get()));
     }
 
     private static void registerBulb(DyeColor color, boolean inverted, Map<DyeColor, DeferredItem<BlockItem>> itemRegistry) {

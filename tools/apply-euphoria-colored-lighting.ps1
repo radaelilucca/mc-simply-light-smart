@@ -28,7 +28,7 @@ $families = @(
     "dimmer_lightbulb",
     "dimmer_illuminant_slab",
     "dimmer_illuminant_panel",
-    "dimmer_wall_lamp"
+    "dimmer_fixture"
 )
 $colors = @(
     "", "black", "blue", "brown", "cyan", "gray", "green", "light_blue",

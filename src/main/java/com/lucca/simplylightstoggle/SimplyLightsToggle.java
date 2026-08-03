@@ -1,11 +1,10 @@
 package com.lucca.simplylightstoggle;
 
-import com.mojang.logging.LogUtils;
 import com.lucca.simplylightstoggle.registry.ModBlocks;
-import net.minecraft.world.item.CreativeModeTabs;
+import com.lucca.simplylightstoggle.registry.ModCreativeTabs;
+import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import org.slf4j.Logger;
 
 /** Main entry point for Simply Lights Toggle. */
@@ -16,13 +15,7 @@ public final class SimplyLightsToggle {
 
     public SimplyLightsToggle(IEventBus modEventBus) {
         ModBlocks.register(modEventBus);
-        modEventBus.addListener(this::addCreativeTabEntries);
+        ModCreativeTabs.register(modEventBus);
         LOGGER.info("Simply Lights Toggle loaded");
-    }
-
-    private void addCreativeTabEntries(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
-            ModBlocks.addBulbsToCreativeTab(event);
-        }
     }
 }
