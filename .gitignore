@@ -1,0 +1,55 @@
+### Gradle ###
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/**/out/
+
+.run/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.eclipse/
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/**/bin/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+### Minecraft Modding ###
+run/
+!**/src/**/run/
+**/src/generated/**/.cache/
+repo/
+!**/src/**/repo/
+
+### Local dependencies ###
+# The pinned Simply Light development dependency is required for reproducible builds.
+libs/*
+!libs/simplylight-1.5.3+1.21.1-b4.jar
+
+### Runtime diagnostics ###
+logs/
+crash-reports/
+*.log
+hs_err_pid*.log
+replay_pid*.log
+
+### Operating systems ###
+Thumbs.db
