@@ -26,6 +26,14 @@ O JAR do Simply Light utilizado no desenvolvimento está fixado em
 
 O JAR gerado fica em `build/libs/`.
 
+## Receitas
+
+Cada variante normal e criada em uma mesa de trabalho com oito luzes
+correspondentes do Simply Light ao redor de uma redstone. A receita devolve
+oito blocos dimerizaveis da mesma familia e cor. As variantes invertidas usam
+o mesmo padrao 3x3, com uma redstone torch no centro: podem partir de oito
+blocos dimerizaveis normais ou diretamente de oito luzes do Simply Light.
+
 ## Luz colorida com shaders
 
 Shaders atribuem perfis de luz colorida pelo ID do bloco. Para que
