@@ -25,6 +25,7 @@ public final class ModBlocks {
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(SimplyLightsToggle.MOD_ID);
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(SimplyLightsToggle.MOD_ID);
     private static final List<DeferredBlock<? extends Block>> DIMMER_BLOCKS = new ArrayList<>();
+    private static final List<DeferredItem<BlockItem>> INVERTED_DIMMER_ITEMS = new ArrayList<>();
 
     private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_BULBS = new EnumMap<>(DyeColor.class);
     private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_BULBS = new EnumMap<>(DyeColor.class);
@@ -75,6 +76,10 @@ public final class ModBlocks {
         return DIMMER_BLOCKS.stream().map(DeferredBlock::get).toArray(Block[]::new);
     }
 
+    public static Item[] invertedDimmerItems() {
+        return INVERTED_DIMMER_ITEMS.stream().map(DeferredItem::get).toArray(Item[]::new);
+    }
+
     private static void addItems(CreativeModeTab.Output output, Map<DyeColor, DeferredItem<BlockItem>> items) {
         items.values().forEach(item -> output.accept(item.get()));
     }
@@ -87,7 +92,11 @@ public final class ModBlocks {
         String id = variantId(baseId, color, inverted);
         DeferredBlock<? extends Block> block = BLOCKS.register(id, () -> factory.apply(color, inverted));
         DIMMER_BLOCKS.add(block);
-        itemRegistry.put(color, ITEMS.registerSimpleBlockItem(id, block));
+        DeferredItem<BlockItem> item = ITEMS.registerSimpleBlockItem(id, block);
+        itemRegistry.put(color, item);
+        if (inverted) {
+            INVERTED_DIMMER_ITEMS.add(item);
+        }
     }
 
     private static String variantId(String baseId, DyeColor color, boolean inverted) {

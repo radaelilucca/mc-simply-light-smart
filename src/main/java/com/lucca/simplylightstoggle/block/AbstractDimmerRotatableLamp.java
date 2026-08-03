@@ -24,7 +24,7 @@ public abstract class AbstractDimmerRotatableLamp extends RotatableLamp {
         super(properties.lightLevel(state -> lightLevel(state, maximumLightLevel)));
         this.maximumLightLevel = maximumLightLevel;
         this.inverted = inverted;
-        registerDefaultState(defaultBlockState().setValue(POWER, inverted ? 15 : 0));
+        registerDefaultState(defaultBlockState().setValue(POWER, inverted ? 0 : 15));
     }
 
     @Override
@@ -63,7 +63,7 @@ public abstract class AbstractDimmerRotatableLamp extends RotatableLamp {
 
     private int redstonePower(Level level, BlockPos pos) {
         int signal = level.getBestNeighborSignal(pos);
-        return inverted ? 15 - signal : signal;
+        return inverted ? signal : 15 - signal;
     }
 
     private static int lightLevel(BlockState state, int maximumLightLevel) {

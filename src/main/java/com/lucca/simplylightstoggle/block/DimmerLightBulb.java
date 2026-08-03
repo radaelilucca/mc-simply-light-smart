@@ -6,7 +6,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 
 /**
  * A Simply Light-compatible bulb whose brightness follows the surrounding
- * redstone signal. The inverted variant is brightest with no signal.
+ * redstone signal. The inverted variant brightens as the signal increases.
  */
 public final class DimmerLightBulb extends AbstractDimmerRotatableLamp {
     private final DyeColor color;
