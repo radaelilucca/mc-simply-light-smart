@@ -12,7 +12,8 @@ param(
 )
 
 $blockPropertiesPath = Join-Path $ShaderPackPath "shaders\block.properties"
-$backupPath = "$blockPropertiesPath.simply-lights-toggle-backup"
+$backupPath = "$blockPropertiesPath.simply-light-smart-backup"
+$legacyBackupPath = "$blockPropertiesPath.simply-lights-toggle-backup"
 
 if (-not (Test-Path -LiteralPath $blockPropertiesPath -PathType Leaf)) {
     throw "Shader pack not found: $blockPropertiesPath"
@@ -20,7 +21,12 @@ if (-not (Test-Path -LiteralPath $blockPropertiesPath -PathType Leaf)) {
 
 # Always start from the untouched copy so running the script again cannot add duplicates.
 if (-not (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
-    Copy-Item -LiteralPath $blockPropertiesPath -Destination $backupPath
+    if (Test-Path -LiteralPath $legacyBackupPath -PathType Leaf) {
+        Copy-Item -LiteralPath $legacyBackupPath -Destination $backupPath
+    }
+    else {
+        Copy-Item -LiteralPath $blockPropertiesPath -Destination $backupPath
+    }
 }
 
 $contents = [System.IO.File]::ReadAllText($backupPath)
@@ -48,7 +54,7 @@ foreach ($color in $colors) {
     $dimmerStates = foreach ($family in $families) {
         foreach ($invertedSuffix in @("", "_inverted")) {
             foreach ($power in 1..15) {
-                "simply_lights_toggle:${family}${colorSuffix}${invertedSuffix}:power=$power"
+                "simply_light_smart:${family}${colorSuffix}${invertedSuffix}:power=$power"
             }
         }
     }

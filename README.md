@@ -1,4 +1,4 @@
-# Simply Lights Toggle Addon
+# Simply Light - Smart!
 
 Addon NeoForge para Minecraft 1.21.1 que acrescenta versões dimerizáveis das
 famílias Bulbs, Illuminant Slabs, Illuminant Panels e Fixtures do

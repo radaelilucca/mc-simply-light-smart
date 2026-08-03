@@ -1,4 +1,4 @@
-# Guia de licença — Simply Lights Toggle Addon
+# Guia de licença — Simply Light - Smart!
 
 ## Simply Light
 

@@ -1,1 +1,0 @@
-{"loader":"neoforge:composite","children":{"Solid":{"parent":"simply_lights_toggle:block/dimmer_lightbulb_green_base","render_type":"minecraft:solid"},"Translucent":{"parent":"simply_lights_toggle:block/dimmer_lightbulb_green_glow","render_type":"minecraft:translucent"}},"item_render_order":["Solid","Translucent"],"textures":{"particle":"simplylight:block/omni/omni_green"}}

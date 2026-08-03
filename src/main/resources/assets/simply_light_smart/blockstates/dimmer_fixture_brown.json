@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "simply_light_smart:block/dimmer_floor_lamp_brown", "x": 180 },
+    "facing=east": { "model": "simply_light_smart:block/dimmer_fixture_brown", "y": 270 },
+    "facing=north": { "model": "simply_light_smart:block/dimmer_fixture_brown", "y": 180 },
+    "facing=south": { "model": "simply_light_smart:block/dimmer_fixture_brown" },
+    "facing=up": { "model": "simply_light_smart:block/dimmer_floor_lamp_brown" },
+    "facing=west": { "model": "simply_light_smart:block/dimmer_fixture_brown", "y": 90 }
+  }
+}

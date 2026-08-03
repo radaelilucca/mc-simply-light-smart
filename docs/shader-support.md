@@ -5,7 +5,7 @@ Complementary Reimagined + Euphoria Patches vem das regras do proprio shaderpack
 ele identifica os blocos do Simply Light pelo ID de registro, como
 `simplylight:lightbulb_red`.
 
-Como este addon registra blocos novos no namespace `simply_lights_toggle`, ele
+Como este addon registra blocos novos no namespace `simply_light_smart`, ele
 precisa de uma pequena integracao com o shaderpack. O script abaixo adiciona os
 IDs dos quatro tipos dimerizaveis aos mesmos perfis do Simply Light, para todas
 as cores e para os dois modos (normal e invertido). Ele registra apenas os
@@ -26,7 +26,7 @@ outra copia do mesmo shaderpack, informe o caminho:
 ```
 
 O arquivo original e preservado ao lado de `block.properties` com o sufixo
-`.simply-lights-toggle-backup`. Recarregue o shaderpack (ou reinicie o cliente)
+`.simply-light-smart-backup`. Recarregue o shaderpack (ou reinicie o cliente)
 depois de aplicar a integracao.
 
 Outros shaderpacks podem usar tabelas diferentes; eles precisam de uma ponte

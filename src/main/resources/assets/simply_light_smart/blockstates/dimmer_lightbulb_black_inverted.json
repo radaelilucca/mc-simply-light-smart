@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "simply_light_smart:block/dimmer_lightbulb_black", "x": 180 },
+    "facing=east": { "model": "simply_light_smart:block/dimmer_lightbulb_black", "x": 90, "y": 90 },
+    "facing=north": { "model": "simply_light_smart:block/dimmer_lightbulb_black", "x": 90 },
+    "facing=south": { "model": "simply_light_smart:block/dimmer_lightbulb_black", "x": 90, "y": 180 },
+    "facing=up": { "model": "simply_light_smart:block/dimmer_lightbulb_black" },
+    "facing=west": { "model": "simply_light_smart:block/dimmer_lightbulb_black", "x": 90, "y": 270 }
+  }
+}
