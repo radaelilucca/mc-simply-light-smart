@@ -11,6 +11,11 @@ IDs dos quatro tipos dimerizaveis aos mesmos perfis do Simply Light, para todas
 as cores e para os dois modos (normal e invertido). Ele registra apenas os
 estados `power=1..15`; `power=0` continua escuro.
 
+O mesmo script tambem atualiza `item.properties`. Isso faz os blocos do addon
+usarem o perfil colorido correto quando estiverem na mao principal ou secundária;
+itens nao possuem o estado de redstone, portanto o shader aplica o perfil da cor
+da variante.
+
 No PowerShell, na raiz do projeto, execute:
 
 ```powershell
