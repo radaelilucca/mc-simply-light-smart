@@ -4,6 +4,10 @@ Addon NeoForge para Minecraft 1.21.1 que acrescenta versões dimerizáveis das
 famílias Bulbs, Illuminant Slabs, Illuminant Panels e Fixtures do
 [Simply Light](https://www.curseforge.com/minecraft/mc-mods/simply-light).
 
+The English public-page draft is available at
+[docs/project-page.md](docs/project-page.md). Release notes are maintained in
+[CHANGELOG.md](CHANGELOG.md).
+
 Cada cor possui uma variante normal e uma invertida. A intensidade de emissão é
 proporcional ao sinal de redstone recebido.
 
