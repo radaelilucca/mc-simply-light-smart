@@ -22,6 +22,10 @@ Normal dimmers start at full brightness and become dimmer as redstone power
 increases. Inverted dimmers start off and become brighter as redstone power
 increases. All variants support the full 0–15 redstone range.
 
+![Normal Smart dimmer becoming dimmer as its redstone signal increases](gallery/AE%20-%20dimmer.gif)
+
+![Inverted Smart dimmer becoming brighter as its redstone signal increases](gallery/AE%20-%20inverted-dimmer.gif)
+
 Existing Simply Light blocks are never changed.
 
 ### Smart Switch and Smart Linker
@@ -44,6 +48,10 @@ by their Smart Switch. A dimmer can belong to only one switch at a time.
 The Linker shows the number of selected dimmers and highlights them with a
 simple green outline.
 
+![Smart Switch relaying its redstone signal to linked dimmers](gallery/AE%20-%20switch.gif)
+
+![Smart Switch blinking as its linked dimmers update](gallery/AE%20-%20switch-blink.gif)
+
 ## Crafting
 
 - Convert supported Simply Light blocks into normal dimmers with eight matching
@@ -57,13 +65,13 @@ simple green outline.
 
 ## Shader support
 
-When using Complementary Reimagined with Euphoria Patches, the optional helper
-script can assign the same colored-light profiles used by Simply Light to the
-Smart dimmers. See
-[Shader support](shader-support.md) for the exact command, including Sable
-instances.
+Shader support is currently being implemented. The initial plan is to support:
 
-Other shaderpacks may need their own block-ID color-profile integration.
+- BSL Shaders
+- Complementary Shaders - Reimagined
+- Complementary Shaders - Unbound
+
+<img src="gallery/AE%20-%20shader.gif" alt="Smart dimmers with shader support" width="640">
 
 ## Compatibility
 
