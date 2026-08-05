@@ -4,6 +4,8 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
+## [0.2.0] - 2026-08-05
+
 ### Added
 
 - Redstone-dimmable Illuminant Blocks in every dye color, with normal and
