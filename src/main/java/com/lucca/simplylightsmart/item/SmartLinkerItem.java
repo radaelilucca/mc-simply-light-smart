@@ -21,8 +21,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * Selects dimmable lights and applies the complete selection to a Smart
- * Switch. The server owns all mutation and validation; the item only retains
- * the proposed target list between clicks.
+ * Switch. The server owns all mutation and validation; the item retains the
+ * proposed target list until the player clears it manually.
  */
 public final class SmartLinkerItem extends Item {
     public SmartLinkerItem(Properties properties) {
@@ -75,7 +75,6 @@ public final class SmartLinkerItem extends Item {
             if (blockEntity instanceof SmartSwitchBlockEntity switchEntity) {
                 SmartSwitchBlockEntity.LinkApplicationResult result = switchEntity.applyLinks(player, selection(stack).targets());
                 if (result.success()) {
-                    clearSelection(stack);
                     player.displayClientMessage(result.linkedCount() == 0
                             ? Component.translatable("message.simply_light_smart.linker.cleared")
                             : Component.translatable("message.simply_light_smart.linker.applied", result.linkedCount()), true);

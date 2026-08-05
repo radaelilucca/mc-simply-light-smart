@@ -12,6 +12,8 @@ All notable changes to Simply Light - Smart! are documented in this file.
 ### Changed
 
 - Dimmer visuals now use seven brightness stages across every lighting family.
+- Smart Linker selections now remain available after applying them to a Smart
+  Switch, until cleared manually.
 
 ## [0.1.0] - Initial release
 

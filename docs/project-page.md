@@ -39,7 +39,8 @@ Use the **Smart Linker** to configure it:
 2. Right-click each dimmer with the **Smart Linker** to add or remove it from the
    selection.
 3. Hold Shift and right-click the **Smart Switch** to replace its linked dimmers.
-4. Hold Shift and left-click in the air to clear the current **Smart Linker** selection.
+   The **Smart Linker** selection remains available for additional changes.
+4. Hold Shift and left-click in the air to clear the **Smart Linker** selection manually.
 
 Linked dimmers ignore their local redstone input and are controlled exclusively
 by their **Smart Switch**. A dimmer can belong to only one **Smart Switch** at a
