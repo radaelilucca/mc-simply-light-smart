@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": { "item": "simplylight:illuminant_yellow_block_on" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "pattern": [ "AAA", "ARA", "AAA" ],
+  "result": { "count": 8, "id": "simply_light_smart:dimmer_illuminant_block_yellow" },
+  "show_notification": false
+}

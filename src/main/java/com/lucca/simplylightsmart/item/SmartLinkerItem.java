@@ -1,6 +1,6 @@
 package com.lucca.simplylightsmart.item;
 
-import com.lucca.simplylightsmart.block.AbstractDimmerRotatableLamp;
+import com.lucca.simplylightsmart.block.DimmerLight;
 import com.lucca.simplylightsmart.registry.ModDataComponents;
 import com.lucca.simplylightsmart.smart.SmartLinkerSelection;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
@@ -55,7 +55,7 @@ public final class SmartLinkerItem extends Item {
     public InteractionResult useOn(UseOnContext context) {
         ItemStack stack = context.getItemInHand();
         BlockPos clickedPos = context.getClickedPos();
-        if (context.getLevel().getBlockState(clickedPos).getBlock() instanceof AbstractDimmerRotatableLamp) {
+        if (context.getLevel().getBlockState(clickedPos).getBlock() instanceof DimmerLight) {
             if (!(context.getPlayer() instanceof ServerPlayer) || !(context.getLevel() instanceof ServerLevel level)) {
                 return InteractionResult.SUCCESS;
             }

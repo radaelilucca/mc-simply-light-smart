@@ -9,8 +9,8 @@ system.
 
 ## Features
 
-- Smart versions of Simply Light Bulbs, Illuminant Slabs, Illuminant Panels,
-  and Fixtures in every color.
+- Smart versions of Simply Light Bulbs, Illuminant Blocks, Illuminant Slabs,
+  Illuminant Panels, and Fixtures in every color.
 - Normal dimmers become dimmer as their redstone signal increases; inverted
   dimmers become brighter. Both support the full 0–15 range.
 - A Smart Switch relays its exact redstone signal to up to 64 linked dimmers

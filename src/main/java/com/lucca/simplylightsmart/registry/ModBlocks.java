@@ -2,6 +2,7 @@ package com.lucca.simplylightsmart.registry;
 
 import com.lucca.simplylightsmart.SimplyLightSmart;
 import com.lucca.simplylightsmart.block.DimmerFixture;
+import com.lucca.simplylightsmart.block.DimmerIlluminantBlock;
 import com.lucca.simplylightsmart.block.DimmerLightBulb;
 import com.lucca.simplylightsmart.block.DimmerThinLamp;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
@@ -39,6 +40,8 @@ public final class ModBlocks {
     private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_PANELS = new EnumMap<>(DyeColor.class);
     private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_FIXTURES = new EnumMap<>(DyeColor.class);
     private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_FIXTURES = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_ILLUMINANT_BLOCKS = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_ILLUMINANT_BLOCKS = new EnumMap<>(DyeColor.class);
 
     public static final DeferredBlock<SmartSwitchBlock> SMART_SWITCH = BLOCKS.register("smart_switch", () ->
             new SmartSwitchBlock(BlockBehaviour.Properties.of()
@@ -58,6 +61,8 @@ public final class ModBlocks {
             registerBlock("dimmer_illuminant_panel", color, true, INVERTED_DIMMER_PANELS, (dyeColor, inverted) -> new DimmerThinLamp(4, dyeColor, inverted));
             registerBlock("dimmer_fixture", color, false, DIMMER_FIXTURES, DimmerFixture::new);
             registerBlock("dimmer_fixture", color, true, INVERTED_DIMMER_FIXTURES, DimmerFixture::new);
+            registerBlock("dimmer_illuminant_block", color, false, DIMMER_ILLUMINANT_BLOCKS, DimmerIlluminantBlock::new);
+            registerBlock("dimmer_illuminant_block", color, true, INVERTED_DIMMER_ILLUMINANT_BLOCKS, DimmerIlluminantBlock::new);
         }
     }
 
@@ -82,6 +87,8 @@ public final class ModBlocks {
         addItems(output, INVERTED_DIMMER_PANELS);
         addItems(output, DIMMER_FIXTURES);
         addItems(output, INVERTED_DIMMER_FIXTURES);
+        addItems(output, DIMMER_ILLUMINANT_BLOCKS);
+        addItems(output, INVERTED_DIMMER_ILLUMINANT_BLOCKS);
         output.accept(SMART_SWITCH_ITEM.get());
     }
 

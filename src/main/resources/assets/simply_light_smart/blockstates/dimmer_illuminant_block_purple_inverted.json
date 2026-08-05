@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "power=0": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_inverted" },
+    "power=1": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=2": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=3": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=4": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=5": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=6": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=7": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=8": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=9": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=10": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=11": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=12": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=13": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=14": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" },
+    "power=15": { "model": "simply_light_smart:block/dimmer_illuminant_block_purple_on" }
+  }
+}

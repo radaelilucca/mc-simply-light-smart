@@ -1,6 +1,6 @@
 package com.lucca.simplylightsmart.smart;
 
-import com.lucca.simplylightsmart.block.AbstractDimmerRotatableLamp;
+import com.lucca.simplylightsmart.block.DimmerLight;
 import com.lucca.simplylightsmart.registry.ModBlockEntities;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,7 +72,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             }
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
             if (targetLevel == null || !targetLevel.hasChunkAt(target.pos())
-                    || !(targetLevel.getBlockState(target.pos()).getBlock() instanceof AbstractDimmerRotatableLamp)) {
+                    || !(targetLevel.getBlockState(target.pos()).getBlock() instanceof DimmerLight)) {
                 return LinkApplicationResult.failure("invalid_target");
             }
         }
@@ -170,7 +170,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         for (GlobalPos target : targets) {
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
             if (targetLevel != null && targetLevel.hasChunkAt(target.pos())
-                    && targetLevel.getBlockState(target.pos()).getBlock() instanceof AbstractDimmerRotatableLamp dimmer) {
+                    && targetLevel.getBlockState(target.pos()).getBlock() instanceof DimmerLight dimmer) {
                 dimmer.refreshPower(targetLevel, target.pos(), targetLevel.getBlockState(target.pos()));
             }
         }

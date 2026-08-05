@@ -2,6 +2,13 @@
 
 All notable changes to Simply Light - Smart! are documented in this file.
 
+## Unreleased
+
+### Added
+
+- Redstone-dimmable Illuminant Blocks in every dye color, with normal and
+  inverted variants that support Smart Switch linking.
+
 ## [0.1.0] - Initial release
 
 ### Added
