@@ -9,6 +9,10 @@ All notable changes to Simply Light - Smart! are documented in this file.
 - Redstone-dimmable Illuminant Blocks in every dye color, with normal and
   inverted variants that support Smart Switch linking.
 
+### Changed
+
+- Dimmer visuals now use seven brightness stages across every lighting family.
+
 ## [0.1.0] - Initial release
 
 ### Added
