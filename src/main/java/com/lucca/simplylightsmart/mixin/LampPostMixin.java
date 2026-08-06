@@ -22,6 +22,13 @@ abstract class LampPostMixin {
         builder.add(OriginalLightAdapter.SMART_POWER, OriginalLightAdapter.SMART_MODE);
     }
 
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void simplyLightSmart$setNativeSmartDefaults(CallbackInfo callback) {
+        Block block = (Block) (Object) this;
+        ((BlockDefaultStateInvoker) block).simplyLightSmart$registerDefaultState(
+                OriginalLightAdapter.applyNativeDefaults(block.defaultBlockState()));
+    }
+
     @Inject(method = "lambda$new$3", at = @At("HEAD"), cancellable = true)
     private static void simplyLightSmart$readSmartPower(BlockState state, CallbackInfoReturnable<Integer> callback) {
         if (OriginalLightAdapter.hasSmartPower(state)) {

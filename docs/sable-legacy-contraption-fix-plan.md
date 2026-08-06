@@ -11,8 +11,8 @@ a restauração dos plot chunks.
 | Fase | Estado | Commit | Validação manual |
 | --- | --- | --- | --- |
 | 0. Plano e reprodução | Concluída | `0cc8839` | Mapa de regressão identificado |
-| 1. Fila segura pós-tick | Pronta para teste | — | Reabrir a contraption legada |
-| 2. Defaults e migração incremental | Pendente | — | Conferir emissão e reinício |
+| 1. Fila segura pós-tick | Validada | `b62149c` | Contraption legada carregou normalmente |
+| 2. Defaults e cálculo de estado | Pronta para teste | — | Conferir emissão e reinício |
 | 3. Metadado e índice persistentes | Pendente | — | Confirmar que a segunda carga não escaneia |
 | 4. Ciclo seguro do Switch | Pendente | — | Links e redstone dentro/fora da contraption |
 | 5. Endereços conscientes de sublevel | Pendente | — | Split, merge e realocação |
@@ -36,15 +36,13 @@ a restauração dos plot chunks.
 
 Ponto de teste: abrir duas vezes o mapa de regressão sem remover as luzes.
 
-## Fase 2 — Defaults e migração incremental
+## Fase 2 — Defaults e cálculo de estado
 
 - Definir `smart_mode=native` e o brilho nativo correto no default state de
   cada família do Simply Light.
 - Separar cálculo de estado de sua aplicação no mundo.
-- Migrar chunks sem schema em pequenas fatias por tick, marcando o schema
-  somente ao concluir.
-- Nunca carregar chunks à força; trabalhos de chunks descarregados retornam à
-  fila na próxima carga.
+- Preparar a migração por chunk para a fase seguinte, sem duplicar lógica de
+  cálculo ou escrita.
 
 ## Fase 3 — Metadado e índice persistentes
 

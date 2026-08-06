@@ -4,6 +4,7 @@
   "package": "com.lucca.simplylightsmart.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BlockDefaultStateInvoker",
     "EdgeLightMixin",
     "FixtureMixin",
     "LampBlockMixin",

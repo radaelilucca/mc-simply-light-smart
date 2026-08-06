@@ -185,15 +185,33 @@ public final class OriginalLightAdapter {
                 });
     }
 
-    /** Writes only smart_power and the native Illuminant Block visual state. */
-    public static void applyEmission(Level level, BlockPos pos, BlockState state, int emission) {
-        if (level.isClientSide || !hasSmartPower(state)) {
-            return;
+    /** Returns the state that represents a native Simply Light default. */
+    public static BlockState applyNativeDefaults(BlockState state) {
+        if (!hasSmartPower(state)) {
+            return state;
+        }
+        int nativeEmission = state.getBlock() instanceof LampBlock lampBlock && !lampBlock.Default ? 0 : 15;
+        return state.setValue(SMART_MODE, DimmerMode.NATIVE).setValue(SMART_POWER, nativeEmission);
+    }
+
+    /** Calculates a state update without mutating the level. */
+    public static BlockState calculateEmissionState(BlockState state, int emission) {
+        if (!hasSmartPower(state)) {
+            return state;
         }
         BlockState updated = state.setValue(SMART_POWER, Math.clamp(emission, 0, 15));
         if (updated.getBlock() instanceof LampBlock) {
             updated = updated.setValue(LampBlock.ON, updated.getValue(SMART_POWER) > 0);
         }
+        return updated;
+    }
+
+    /** Writes only smart_power and the native Illuminant Block visual state. */
+    public static void applyEmission(Level level, BlockPos pos, BlockState state, int emission) {
+        if (level.isClientSide || !hasSmartPower(state)) {
+            return;
+        }
+        BlockState updated = calculateEmissionState(state, emission);
         if (updated != state) {
             level.setBlockAndUpdate(pos, updated);
         }

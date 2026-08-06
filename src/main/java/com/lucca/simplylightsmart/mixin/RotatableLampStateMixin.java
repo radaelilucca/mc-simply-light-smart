@@ -20,4 +20,11 @@ abstract class RotatableLampStateMixin {
     private void simplyLightSmart$addSmartPower(StateDefinition.Builder<Block, BlockState> builder, CallbackInfo callback) {
         builder.add(OriginalLightAdapter.SMART_POWER, OriginalLightAdapter.SMART_MODE);
     }
+
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void simplyLightSmart$setNativeSmartDefaults(CallbackInfo callback) {
+        Block block = (Block) (Object) this;
+        ((BlockDefaultStateInvoker) block).simplyLightSmart$registerDefaultState(
+                OriginalLightAdapter.applyNativeDefaults(block.defaultBlockState()));
+    }
 }
