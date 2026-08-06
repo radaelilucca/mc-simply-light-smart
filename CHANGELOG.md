@@ -4,6 +4,34 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
+## [0.4.0] - 2026-08-06
+
+### Added
+
+- Original Simply Light Bulbs, Illuminant Blocks, Slabs, Panels, Fixtures,
+  Rods, Edges, Top Edges, and Columns now support full redstone dimming and
+  Smart Switch control without replacing the placed block.
+- Smart Linker selections now target original Simply Light lights directly and
+  retain their complete shapes, including Illuminant Columns.
+- Smart Switch received a refreshed industrial texture.
+
+### Changed
+
+- The Smart Switch and Smart Linker now control the original Simply Light
+  catalogue instead of separate addon copies of each light.
+- Linker messages and the creative tab now describe lights rather than dimmer
+  variants.
+
+### Fixed
+
+- Linked lights now restore safely as chunks load, without waiting on remote
+  chunks or stalling world loading.
+
+### Removed
+
+- Removed the separate dimmer blocks, their item variants, conversion recipes,
+  models, textures, translations, and creative-tab entries.
+
 ## [0.3.0] - 2026-08-06
 
 ### Added
@@ -11,12 +39,6 @@ All notable changes to Simply Light - Smart! are documented in this file.
 - Redstone-dimmable Illuminant Rods, Illuminant Edges, top-mounted Illuminant
   Edges, and Illuminant Columns in every dye color, with normal and inverted
   variants compatible with Smart Switch linking.
-
-### Changed
-
-- The Euphoria colored-lighting helper now covers every implemented dimmer
-  family while using compact profiles that remain responsive when joining a
-  world.
 
 ### Fixed
 
@@ -56,9 +78,6 @@ All notable changes to Simply Light - Smart! are documented in this file.
   refreshes, and optional Sable sublevel-aware range handling.
 - Smart Switch and Smart Linker crafting recipes, translations, models,
   textures, loot table, and mining tag.
-- Optional Complementary Reimagined + Euphoria Patches color-profile helper
-  for colored shader lighting, including Sable instances.
-
 ### Compatibility
 
 - Minecraft 1.21.1

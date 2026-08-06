@@ -1,7 +1,6 @@
 package com.lucca.simplylightsmart.client;
 
 import com.lucca.simplylightsmart.SimplyLightSmart;
-import com.lucca.simplylightsmart.block.DimmerLight;
 import com.lucca.simplylightsmart.item.SmartLinkerItem;
 import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -74,11 +73,9 @@ public final class SmartLinkerSelectionOutline {
             }
 
             BlockState state = level.getBlockState(target);
-            VoxelShape shape = state.getBlock() instanceof DimmerLight dimmer
-                    ? dimmer.linkOutlineShape(level, target, state)
-                    : OriginalLightAdapter.isLocallyEnabled(state)
-                            ? OriginalLightAdapter.selectionShape(level, target, state)
-                            : state.getShape(level, target);
+            VoxelShape shape = OriginalLightAdapter.isLocallyEnabled(state)
+                    ? OriginalLightAdapter.selectionShape(level, target, state)
+                    : state.getShape(level, target);
             if (shape.isEmpty()) {
                 continue;
             }

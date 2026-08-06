@@ -1,6 +1,5 @@
 package com.lucca.simplylightsmart.smart;
 
-import com.lucca.simplylightsmart.block.DimmerLight;
 import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.lucca.simplylightsmart.registry.ModBlockEntities;
 import java.util.LinkedHashSet;
@@ -77,7 +76,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
             LevelChunk targetChunk = targetLevel == null ? null : targetLevel.getChunkSource().getChunkNow(
                     target.pos().getX() >> 4, target.pos().getZ() >> 4);
-            if (targetChunk == null || !isValidTarget(targetLevel, target.pos(), targetChunk.getBlockState(target.pos()))) {
+            if (targetChunk == null || !isValidTarget(targetLevel, target.pos())) {
                 return LinkApplicationResult.failure("invalid_target");
             }
         }
@@ -180,18 +179,14 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             if (targetChunk == null) {
                 continue;
             }
-            BlockState targetState = targetChunk.getBlockState(target.pos());
             if (OriginalLightAdapter.isValidTarget(targetLevel, target.pos())) {
                 OriginalLightAdapter.refreshLocal(targetLevel, target.pos());
-            } else if (targetState.getBlock() instanceof DimmerLight dimmer) {
-                dimmer.refreshPower(targetLevel, target.pos(), targetState);
             }
         }
     }
 
-    private static boolean isValidTarget(ServerLevel level, BlockPos pos, BlockState state) {
-        return OriginalLightAdapter.isValidTarget(level, pos)
-                || state.getBlock() instanceof DimmerLight;
+    private static boolean isValidTarget(ServerLevel level, BlockPos pos) {
+        return OriginalLightAdapter.isValidTarget(level, pos);
     }
 
     public record LinkApplicationResult(boolean success, String reason, int linkedCount) {

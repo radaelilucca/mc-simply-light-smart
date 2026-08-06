@@ -1,81 +1,78 @@
 # Simply Light - Smart!
 
-> **Early-stage development:** Simply Light - Smart! is under active development.
-> Features, balance, recipes, and compatibility may change as the mod evolves.
+> **Early-stage development:** This mod is under active development. Features,
+> balance, recipes, and compatibility may change. Before the first release,
+> use it at your own risk.
 
-**Simply Light - Smart!** is a NeoForge addon for
+**Simply Light - Smart!** is an addon for
 [Simply Light](https://www.curseforge.com/minecraft/mc-mods/simply-light) that
-adds redstone-dimmable lighting and a wireless-style **Smart Switch** control
-system.
+lets its lights respond smoothly to redstone. It also adds the **Smart Switch**
+and **Smart Linker** for controlling groups of lights wireless from one place.
 
-## Features
+## Redstone-controlled lights
 
-### Dimmable Simply Light blocks
+Place and use the original Simply Light lights as usual. When a supported light
+receives redstone, it changes brightness instead of only switching between on
+and off.
 
-Every color of these Simply Light families has a Smart equivalent:
+For most lights, no redstone means full brightness. As the signal gets stronger,
+the light gets dimmer; a strength of 15 turns it off. This works with every
+color of:
 
 - Bulbs
-- Illuminant Blocks
-- Illuminant Slabs
-- Illuminant Panels
+- Illuminant Slabs and Panels
 - Fixtures
+- Illuminant Rods
+- Illuminant Edges and Top Edges
+- Illuminant Columns
 
-Normal dimmers start at full brightness and become dimmer as redstone power
-increases. Inverted dimmers start off and become brighter as redstone power
-increases. All variants support the full 0–15 redstone range.
+Illuminant Blocks keep their familiar two versions: one starts off and gets
+brighter as the signal grows, while the other starts on and gets dimmer.
 
-![Normal Smart dimmer becoming dimmer as its redstone signal increases](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20dimmer.gif?raw=true)
+![A Simply Light lamp dimming as its redstone signal increases](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20dimmer.gif?raw=true)
 
-![Inverted Smart dimmer becoming brighter as its redstone signal increases](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20inverted-dimmer.gif?raw=true)
+## **Smart Switch** and **Smart Linker**
 
-Existing Simply Light blocks are never changed.
+The **Smart Switch** lets one redstone signal control many lights at once. It
+sends its current strength to every linked light, up to 64 lights within 128
+blocks.
 
-### **Smart Switch** and **Smart Linker**
+To set it up:
 
-The **Smart Switch** receives a redstone signal and relays that exact strength
-to linked dimmers. A **Smart Switch** supports up to 64 dimmers within a
-128-block physical range.
+1. Place a **Smart Switch** and connect it to redstone.
+2. Right-click each Simply Light block with the **Smart Linker** to add it to
+   the selection. Right-click it again to remove it.
+3. Hold Shift and right-click the **Smart Switch** to apply the selection.
+4. Keep using the **Smart Linker** to add more lights, then Shift-right-click
+   the Switch again whenever you want to update its list.
+5. Hold Shift and left-click in the air to clear the **Smart Linker** selection.
 
-Use the **Smart Linker** to configure it:
+Linked lights follow the Switch and ignore their own nearby redstone. A light
+can be linked to only one **Smart Switch** at a time. The **Smart Linker** keeps
+your selection until you clear it and highlights selected lights with a green
+outline.
 
-1. Place a **Smart Switch** and connect redstone.
-2. Right-click each dimmer with the **Smart Linker** to add or remove it from the
-   selection.
-3. Hold Shift and right-click the **Smart Switch** to replace its linked dimmers.
-   The **Smart Linker** selection remains available for additional changes.
-4. Hold Shift and left-click in the air to clear the **Smart Linker** selection manually.
+![A Smart Switch relaying its redstone signal to linked lights](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20switch.gif?raw=true)
 
-Linked dimmers ignore their local redstone input and are controlled exclusively
-by their **Smart Switch**. A dimmer can belong to only one **Smart Switch** at a
-time.
-
-The **Smart Linker** shows the number of selected dimmers and highlights them
-with a simple green outline.
-
-![Smart Switch relaying its redstone signal to linked dimmers](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20switch.gif?raw=true)
-
-![Smart Switch blinking as its linked dimmers update](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20switch-blink.gif?raw=true)
+![A Smart Switch updating its linked lights](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20switch-blink.gif?raw=true)
 
 ## Crafting
 
-- Convert supported Simply Light blocks into normal dimmers with eight matching
-  blocks around redstone dust.
-- Convert eight matching blocks into inverted dimmers with a redstone torch in
-  the center. This works with either normal Smart dimmers or the original
-  Simply Light blocks.
-- Craft a **Smart Switch** with iron, redstone, a comparator, an ender pearl, and
-  a repeater.
-- Craft a **Smart Linker** with a redstone torch, iron ingot, and amethyst shard.
+Craft a **Smart Switch** with iron, redstone, a comparator, an ender pearl, and
+a repeater. Craft a **Smart Linker** with a redstone torch, an iron ingot, and
+an amethyst shard.
 
 ## Shader support
 
-Shader support is currently being implemented. The initial plan is to support:
+Shader support is being implemented. The initial plan is to support:
 
 - BSL Shaders
 - Complementary Shaders - Reimagined
 - Complementary Shaders - Unbound
 
-<img src="https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20shader.gif?raw=true" alt="Smart dimmers with shader support" width="240">
+<img src="https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20shader.gif?raw=true" alt="Simply Light blocks with shader support" width="240">
+
+Original integrations of Simply Light with shaders should work just fine.
 
 ## Compatibility
 

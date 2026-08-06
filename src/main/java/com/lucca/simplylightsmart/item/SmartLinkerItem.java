@@ -1,6 +1,5 @@
 package com.lucca.simplylightsmart.item;
 
-import com.lucca.simplylightsmart.block.DimmerLight;
 import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.lucca.simplylightsmart.registry.ModDataComponents;
 import com.lucca.simplylightsmart.smart.SmartLinkerSelection;
@@ -22,7 +21,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Selects dimmable lights and applies the complete selection to a Smart
+ * Selects original Simply Light fixtures and applies the complete selection to a Smart
  * Switch. The server owns all mutation and validation; the item retains the
  * proposed target list until the player clears it manually.
  */
@@ -58,13 +57,6 @@ public final class SmartLinkerItem extends Item {
         ItemStack stack = context.getItemInHand();
         BlockPos clickedPos = context.getClickedPos();
         BlockState clickedState = context.getLevel().getBlockState(clickedPos);
-        if (clickedState.getBlock() instanceof DimmerLight dimmer) {
-            if (!(context.getPlayer() instanceof ServerPlayer) || !(context.getLevel() instanceof ServerLevel level)) {
-                return InteractionResult.SUCCESS;
-            }
-            toggleTarget(stack, GlobalPos.of(level.dimension(), dimmer.linkPosition(level, clickedPos, clickedState)));
-            return InteractionResult.CONSUME;
-        }
         if (OriginalLightAdapter.isLocallyEnabled(clickedState)) {
             if (!(context.getPlayer() instanceof ServerPlayer) || !(context.getLevel() instanceof ServerLevel level)) {
                 return InteractionResult.SUCCESS;

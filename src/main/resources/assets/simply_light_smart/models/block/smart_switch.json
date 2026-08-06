@@ -2,11 +2,11 @@
   "parent": "minecraft:block/cube",
   "textures": {
     "down": "simply_light_smart:block/smart_switch_side",
-    "up": "simply_light_smart:block/smart_switch_top",
-    "north": "simply_light_smart:block/smart_switch_side",
+    "up": "simply_light_smart:block/smart_switch_side",
     "south": "simply_light_smart:block/smart_switch_side",
     "west": "simply_light_smart:block/smart_switch_side",
     "east": "simply_light_smart:block/smart_switch_side",
-    "particle": "simply_light_smart:block/smart_switch_side"
+    "particle": "simply_light_smart:block/smart_switch_side",
+    "north": "simply_light_smart:block/smart_switch_north"
   }
 }

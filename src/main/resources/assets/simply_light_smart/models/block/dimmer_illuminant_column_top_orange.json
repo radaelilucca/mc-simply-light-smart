@@ -1,6 +1,0 @@
-﻿{
-    "textures":  {
-                     "1":  "simplylight:block/post/post_lightface_orange"
-                 },
-    "parent":  "simply_light_smart:block/dimmer_illuminant_column_top_base"
-}

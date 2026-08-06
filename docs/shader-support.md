@@ -1,54 +1,16 @@
 # Suporte a shaders
 
-No Minecraft, a emissao de luz normal e monocromatica. A luz colorida vista com
-Complementary Reimagined + Euphoria Patches vem das regras do proprio shaderpack:
-ele identifica os blocos do Simply Light pelo ID de registro, como
-`simplylight:lightbulb_red`.
+O addon controla a emissão vanilla dos blocos originais do Simply Light por
+meio do estado `smart_power=0..15`. Nenhum bloco de luz, item, modelo ou ID de
+shader é criado pelo addon.
 
-Como este addon registra blocos novos no namespace `simply_light_smart`, ele
-precisa de uma pequena integracao com o shaderpack. O script abaixo adiciona os
-IDs dos quatro tipos dimerizaveis aos mesmos perfis do Simply Light, para todas
-as cores e para os dois modos (normal e invertido). Ele registra apenas os
-estados `power=1..15`; `power=0` continua escuro.
+Shader packs que calculam a emissão a partir da luz vanilla acompanham o
+dimmer automaticamente. Alguns packs identificam uma lâmpada apenas pelo seu
+ID e aplicam um material emissivo fixo. Nesses packs, o estado `smart_power`
+precisa ser reconhecido pela própria integração do shader para que uma luz em
+`0` não continue brilhando.
 
-O mesmo script tambem atualiza `item.properties`. Isso faz os blocos do addon
-usarem o perfil colorido correto quando estiverem na mao principal ou secundária;
-itens nao possuem o estado de redstone, portanto o shader aplica o perfil da cor
-da variante.
-
-No PowerShell, na raiz do projeto, execute:
-
-```powershell
-.\tools\apply-euphoria-colored-lighting.ps1
-```
-
-O alvo padrao e a copia de desenvolvimento em
-`run/shaderpacks/ComplementaryReimagined_r5.8.1 + EuphoriaPatches_1.9.3`. Para
-outra copia do mesmo shaderpack, informe o caminho:
-
-```powershell
-.\tools\apply-euphoria-colored-lighting.ps1 -ShaderPackPath 'C:\caminho\para\o\shaderpack'
-```
-
-Ao testar em uma instancia CurseForge com Sable, aplique a integracao **na
-copia do shaderpack dessa instancia**, nao apenas em `run/`. Por exemplo:
-
-```powershell
-.\tools\apply-euphoria-colored-lighting.ps1 `
-  -InstancePath 'C:\Users\lucca\curseforge\minecraft\Instances\Create Ult. Sel. Custom - 11.0.0'
-```
-
-Sable reutiliza a tabela de IDs de blocos do Iris para renderizar os sublevels.
-Portanto, nao ha um arquivo de shader especifico do Sable a editar: se os IDs
-`simply_light_smart:*` nao estiverem em `shaders/block.properties` na copia
-ativa do shaderpack, as lampadas do addon usam luz neutra tambem no sublevel.
-O script cria backups antes da primeira alteracao e pode ser executado de novo
-com seguranca.
-
-O arquivo original e preservado ao lado de `block.properties` com o sufixo
-`.simply-light-smart-backup`. Recarregue o shaderpack (ou reinicie o cliente)
-depois de aplicar a integracao.
-
-Outros shaderpacks podem usar tabelas diferentes; eles precisam de uma ponte
-equivalente. O addon nao pode declarar essa cor por conta propria, porque esse
-metadado pertence ao shaderpack ativo.
+A compatibilidade completa para esses packs deve ser tratada no upstream do
+shader: a regra do material precisa respeitar `smart_power` e, idealmente,
+mapear seus níveis visuais. O addon não inclui nem requer um patch manual de
+shader.
