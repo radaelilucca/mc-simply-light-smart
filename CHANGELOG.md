@@ -4,7 +4,7 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
-## [0.4.0] - 2026-08-06
+## [0.3.0] - 2026-08-06
 
 ### Added
 
@@ -31,19 +31,6 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 - Removed the separate dimmer blocks, their item variants, conversion recipes,
   models, textures, translations, and creative-tab entries.
-
-## [0.3.0] - 2026-08-06
-
-### Added
-
-- Redstone-dimmable Illuminant Rods, Illuminant Edges, top-mounted Illuminant
-  Edges, and Illuminant Columns in every dye color, with normal and inverted
-  variants compatible with Smart Switch linking.
-
-### Fixed
-
-- Illuminant Column dimmers now use the original Simply Light item scale in
-  inventories and the creative tab.
 
 ## [0.2.0] - 2026-08-05
 
