@@ -1,7 +1,7 @@
 package com.lucca.simplylightsmart.mixin;
 
 import com.flanks255.simplylight.blocks.LightBulb;
-import com.lucca.simplylightsmart.original.LightBulbSpike;
+import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class LightBulbMixin {
     @Inject(method = "lambda$new$0", at = @At("HEAD"), cancellable = true)
     private static void simplyLightSmart$readSmartPower(BlockState state, CallbackInfoReturnable<Integer> callback) {
-        if (state.hasProperty(LightBulbSpike.SMART_POWER)) {
-            callback.setReturnValue(state.getValue(LightBulbSpike.SMART_POWER));
+        if (OriginalLightAdapter.hasSmartPower(state)) {
+            callback.setReturnValue(state.getValue(OriginalLightAdapter.SMART_POWER));
         }
     }
 }

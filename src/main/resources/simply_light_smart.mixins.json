@@ -4,7 +4,13 @@
   "package": "com.lucca.simplylightsmart.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "EdgeLightMixin",
+    "FixtureMixin",
+    "LampBlockMixin",
+    "LampPostMixin",
     "LightBulbMixin",
+    "RodLampMixin",
+    "ThinLampMixin",
     "RotatableLampStateMixin"
   ],
   "injectors": {

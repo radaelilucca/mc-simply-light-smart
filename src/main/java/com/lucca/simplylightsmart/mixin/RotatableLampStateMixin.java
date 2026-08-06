@@ -1,7 +1,7 @@
 package com.lucca.simplylightsmart.mixin;
 
 import com.flanks255.simplylight.blocks.RotatableLamp;
-import com.lucca.simplylightsmart.original.LightBulbSpike;
+import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -18,6 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class RotatableLampStateMixin {
     @Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
     private void simplyLightSmart$addSmartPower(StateDefinition.Builder<Block, BlockState> builder, CallbackInfo callback) {
-        builder.add(LightBulbSpike.SMART_POWER);
+        builder.add(OriginalLightAdapter.SMART_POWER);
     }
 }
