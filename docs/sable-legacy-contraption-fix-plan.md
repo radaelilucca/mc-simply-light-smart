@@ -10,8 +10,8 @@ a restauração dos plot chunks.
 
 | Fase | Estado | Commit | Validação manual |
 | --- | --- | --- | --- |
-| 0. Plano e reprodução | Em andamento | — | Mapa de regressão identificado |
-| 1. Fila segura pós-tick | Pendente | — | Reabrir a contraption legada |
+| 0. Plano e reprodução | Concluída | `0cc8839` | Mapa de regressão identificado |
+| 1. Fila segura pós-tick | Pronta para teste | — | Reabrir a contraption legada |
 | 2. Defaults e migração incremental | Pendente | — | Conferir emissão e reinício |
 | 3. Metadado e índice persistentes | Pendente | — | Confirmar que a segunda carga não escaneia |
 | 4. Ciclo seguro do Switch | Pendente | — | Links e redstone dentro/fora da contraption |

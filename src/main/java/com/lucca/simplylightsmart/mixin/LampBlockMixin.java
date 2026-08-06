@@ -2,6 +2,8 @@ package com.lucca.simplylightsmart.mixin;
 
 import com.flanks255.simplylight.blocks.LampBlock;
 import com.lucca.simplylightsmart.original.OriginalLightAdapter;
+import com.lucca.simplylightsmart.original.DeferredLightWork;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -36,7 +38,9 @@ abstract class LampBlockMixin {
     private void simplyLightSmart$preserveGraduatedPower(BlockState state, Level level, BlockPos pos,
             Block neighborBlock, BlockPos neighborPos, boolean movedByPiston, CallbackInfo callback) {
         if (OriginalLightAdapter.isLocallyEnabled(state)) {
-            OriginalLightAdapter.refreshLocal(level, pos);
+            if (level instanceof ServerLevel serverLevel) {
+                DeferredLightWork.enqueuePositionRefresh(serverLevel, pos);
+            }
             callback.cancel();
         }
     }

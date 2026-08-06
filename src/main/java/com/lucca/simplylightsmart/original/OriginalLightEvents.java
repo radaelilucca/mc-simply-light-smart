@@ -4,7 +4,6 @@ import com.lucca.simplylightsmart.SimplyLightSmart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -36,8 +35,7 @@ public final class OriginalLightEvents {
             // that chunk's own load hook will refresh the lamp when ready.
             LevelChunk targetChunk = level.getChunkSource().getChunkNow(target.getX() >> 4, target.getZ() >> 4);
             if (targetChunk != null && OriginalLightAdapter.isLocallyEnabled(targetChunk.getBlockState(target))) {
-                // Let native neighbour handlers finish before reading their state.
-                level.getServer().execute(() -> OriginalLightAdapter.refreshLocal(level, target));
+                DeferredLightWork.enqueuePositionRefresh(level, target);
             }
         }
     }
@@ -54,20 +52,19 @@ public final class OriginalLightEvents {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
-        ChunkPos chunkPos = event.getChunk().getPos();
-        level.getServer().execute(() -> refreshChunk(level, chunkPos));
+        if (event.getChunk() instanceof LevelChunk chunk) {
+            DeferredLightWork.enqueueLoadedChunk(level, chunk);
+        }
     }
 
-    private static void refreshChunk(ServerLevel level, ChunkPos chunkPos) {
-        if (!level.hasChunk(chunkPos.x, chunkPos.z)) {
-            return;
-        }
+    /** Invoked only by {@link DeferredLightWork} after the load tick completes. */
+    static void refreshLoadedChunk(ServerLevel level, LevelChunk chunk) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int y = level.getMinBuildHeight(); y < level.getMaxBuildHeight(); y++) {
-            for (int z = chunkPos.getMinBlockZ(); z <= chunkPos.getMaxBlockZ(); z++) {
-                for (int x = chunkPos.getMinBlockX(); x <= chunkPos.getMaxBlockX(); x++) {
+            for (int z = chunk.getPos().getMinBlockZ(); z <= chunk.getPos().getMaxBlockZ(); z++) {
+                for (int x = chunk.getPos().getMinBlockX(); x <= chunk.getPos().getMaxBlockX(); x++) {
                     pos.set(x, y, z);
-                    if (OriginalLightAdapter.isLocallyEnabled(level.getBlockState(pos))) {
+                    if (OriginalLightAdapter.isLocallyEnabled(chunk.getBlockState(pos))) {
                         OriginalLightAdapter.refreshLocal(level, pos);
                     }
                 }

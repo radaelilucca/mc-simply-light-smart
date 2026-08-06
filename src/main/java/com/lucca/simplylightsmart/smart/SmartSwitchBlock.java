@@ -1,6 +1,7 @@
 package com.lucca.simplylightsmart.smart;
 
 import com.mojang.serialization.MapCodec;
+import com.lucca.simplylightsmart.original.DeferredLightWork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,7 +41,7 @@ public final class SmartSwitchBlock extends BaseEntityBlock {
     public void neighborChanged(BlockState state, Level level, BlockPos pos, net.minecraft.world.level.block.Block neighborBlock,
                                 BlockPos neighborPos, boolean movedByPiston) {
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof SmartSwitchBlockEntity switchEntity) {
-            switchEntity.refreshSignal();
+            DeferredLightWork.enqueueSwitchRefresh((ServerLevel) level, pos, switchEntity);
         }
     }
 
@@ -48,7 +49,7 @@ public final class SmartSwitchBlock extends BaseEntityBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof SmartSwitchBlockEntity switchEntity) {
-            switchEntity.refreshSignal();
+            DeferredLightWork.enqueueSwitchRefresh((ServerLevel) level, pos, switchEntity);
         }
     }
 

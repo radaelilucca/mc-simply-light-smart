@@ -1,6 +1,7 @@
 package com.lucca.simplylightsmart.smart;
 
 import com.lucca.simplylightsmart.original.OriginalLightAdapter;
+import com.lucca.simplylightsmart.original.DeferredLightWork;
 import com.lucca.simplylightsmart.registry.ModBlockEntities;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,9 +40,14 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         super.onLoad();
         if (level instanceof ServerLevel serverLevel) {
             SmartLinkSavedData.get(serverLevel).setSwitchSignal(globalPos(serverLevel, worldPosition), signal);
-            refreshSignal();
-            refreshTargets(linkedTargets);
+            DeferredLightWork.enqueueSwitchInitialization(serverLevel, worldPosition, this);
         }
+    }
+
+    /** Invoked by deferred work only after the chunk-restoration tick. */
+    public void initializeAfterLoad() {
+        refreshSignal();
+        refreshTargets(linkedTargets);
     }
 
     public int signal() {
