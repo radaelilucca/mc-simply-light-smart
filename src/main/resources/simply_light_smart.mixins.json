@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.lucca.simplylightsmart.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "LightBulbMixin",
+    "RotatableLampStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
