@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -30,7 +31,11 @@ public final class OriginalLightEvents {
         }
         for (Direction direction : event.getNotifiedSides()) {
             BlockPos target = event.getPos().relative(direction);
-            if (OriginalLightAdapter.isLocallyEnabled(level.getBlockState(target))) {
+            // A neighbour notification can cross into a chunk still being
+            // promoted to FULL. Never make the server thread wait for it:
+            // that chunk's own load hook will refresh the lamp when ready.
+            LevelChunk targetChunk = level.getChunkSource().getChunkNow(target.getX() >> 4, target.getZ() >> 4);
+            if (targetChunk != null && OriginalLightAdapter.isLocallyEnabled(targetChunk.getBlockState(target))) {
                 // Let native neighbour handlers finish before reading their state.
                 level.getServer().execute(() -> OriginalLightAdapter.refreshLocal(level, target));
             }
