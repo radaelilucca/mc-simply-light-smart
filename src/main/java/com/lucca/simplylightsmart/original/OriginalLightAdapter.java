@@ -7,15 +7,22 @@ import com.flanks255.simplylight.blocks.LampPost;
 import com.flanks255.simplylight.blocks.LightBulb;
 import com.flanks255.simplylight.blocks.RodLamp;
 import com.flanks255.simplylight.blocks.ThinLamp;
+import com.lucca.simplylightsmart.smart.SmartLinkSavedData;
+import com.lucca.simplylightsmart.smart.SmartSwitchBlockEntity;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * Shared contract for applying dimmer state to original Simply Light blocks.
@@ -62,6 +69,41 @@ public final class OriginalLightAdapter {
                 || state.getBlock() instanceof LampPost);
     }
 
+    /** Returns the single position that owns control of a supported light. */
+    public static BlockPos controlPosition(BlockPos pos, BlockState state) {
+        return state.getBlock() instanceof LampPost ? lampPostBase(pos, state) : pos;
+    }
+
+    /** Validates a canonical, loaded target before the Smart Switch claims it. */
+    public static boolean isValidTarget(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (!isLocallyEnabled(state) || !controlPosition(pos, state).equals(pos)) {
+            return false;
+        }
+        if (state.getBlock() instanceof LampPost lampPost) {
+            return isLampPostPart(state, lampPost, LampPost.Position.BOTTOM)
+                    && isLampPostPart(level.getBlockState(pos.above()), lampPost, LampPost.Position.MIDDLE)
+                    && isLampPostPart(level.getBlockState(pos.above(2)), lampPost, LampPost.Position.TOP);
+        }
+        return true;
+    }
+
+    /** Supplies the full Column volume to the Linker's selection renderer. */
+    public static VoxelShape selectionShape(BlockGetter level, BlockPos pos, BlockState state) {
+        BlockPos controlPos = controlPosition(pos, state);
+        BlockState controlState = level.getBlockState(controlPos);
+        if (!(controlState.getBlock() instanceof LampPost lampPost)
+                || !isLampPostPart(controlState, lampPost, LampPost.Position.BOTTOM)
+                || !isLampPostPart(level.getBlockState(controlPos.above()), lampPost, LampPost.Position.MIDDLE)
+                || !isLampPostPart(level.getBlockState(controlPos.above(2)), lampPost, LampPost.Position.TOP)) {
+            return state.getShape(level, pos);
+        }
+        return Shapes.or(
+                controlState.getShape(level, controlPos),
+                level.getBlockState(controlPos.above()).getShape(level, controlPos.above()).move(0, 1, 0),
+                level.getBlockState(controlPos.above(2)).getShape(level, controlPos.above(2)).move(0, 2, 0));
+    }
+
     public static void refreshLocal(Level level, BlockPos pos) {
         if (level.isClientSide) {
             return;
@@ -74,7 +116,7 @@ public final class OriginalLightAdapter {
             refreshLampPost(level, pos, state);
             return;
         }
-        applyEmission(level, pos, state, emissionForSignal(state, level.getBestNeighborSignal(pos)));
+        applyEmission(level, pos, state, emissionForSignal(state, controlSignal(level, pos)));
     }
 
     /**
@@ -92,7 +134,7 @@ public final class OriginalLightAdapter {
             return;
         }
 
-        int emission = emissionForSignal(baseState, level.getBestNeighborSignal(basePos));
+        int emission = emissionForSignal(baseState, controlSignal(level, basePos));
         applyEmission(level, basePos, baseState, emission);
         applyEmission(level, basePos.above(), level.getBlockState(basePos.above()), emission);
         applyEmission(level, basePos.above(2), level.getBlockState(basePos.above(2)), emission);
@@ -110,6 +152,41 @@ public final class OriginalLightAdapter {
             case MIDDLE -> pos.below();
             case TOP -> pos.below(2);
         };
+    }
+
+    /** Reads a linked Switch when present, otherwise the block's local redstone. */
+    private static int controlSignal(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return level.getBestNeighborSignal(pos);
+        }
+        GlobalPos target = SmartSwitchBlockEntity.globalPos(serverLevel, pos);
+        Optional<GlobalPos> owner = SmartLinkSavedData.get(serverLevel).ownerOf(target);
+        return owner.flatMap(switchPos -> {
+                    ServerLevel switchLevel = serverLevel.getServer().getLevel(switchPos.dimension());
+                    if (switchLevel != null && switchLevel.hasChunkAt(switchPos.pos())
+                            && switchLevel.getBlockEntity(switchPos.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
+                        return Optional.of(switchEntity.signal());
+                    }
+                    return Optional.empty();
+                })
+                .orElseGet(() -> owner.isPresent() ? 0 : level.getBestNeighborSignal(pos));
+    }
+
+    /** Removes a canonical original-light target from its Switch on break. */
+    public static void removeTarget(Level level, BlockPos pos, BlockState state) {
+        if (!(level instanceof ServerLevel serverLevel) || !isLocallyEnabled(state)) {
+            return;
+        }
+        BlockPos controlPos = controlPosition(pos, state);
+        SmartLinkSavedData.get(serverLevel)
+                .removeTarget(SmartSwitchBlockEntity.globalPos(serverLevel, controlPos))
+                .ifPresent(owner -> {
+                    ServerLevel switchLevel = serverLevel.getServer().getLevel(owner.dimension());
+                    if (switchLevel != null && switchLevel.hasChunkAt(owner.pos())
+                            && switchLevel.getBlockEntity(owner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
+                        switchEntity.forgetTarget(SmartSwitchBlockEntity.globalPos(serverLevel, controlPos));
+                    }
+                });
     }
 
     /** Writes only smart_power and the native Illuminant Block visual state. */

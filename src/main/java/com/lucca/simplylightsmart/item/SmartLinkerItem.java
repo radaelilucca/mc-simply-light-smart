@@ -1,6 +1,7 @@
 package com.lucca.simplylightsmart.item;
 
 import com.lucca.simplylightsmart.block.DimmerLight;
+import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.lucca.simplylightsmart.registry.ModDataComponents;
 import com.lucca.simplylightsmart.smart.SmartLinkerSelection;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
@@ -62,6 +63,13 @@ public final class SmartLinkerItem extends Item {
                 return InteractionResult.SUCCESS;
             }
             toggleTarget(stack, GlobalPos.of(level.dimension(), dimmer.linkPosition(level, clickedPos, clickedState)));
+            return InteractionResult.CONSUME;
+        }
+        if (OriginalLightAdapter.isLocallyEnabled(clickedState)) {
+            if (!(context.getPlayer() instanceof ServerPlayer) || !(context.getLevel() instanceof ServerLevel level)) {
+                return InteractionResult.SUCCESS;
+            }
+            toggleTarget(stack, GlobalPos.of(level.dimension(), OriginalLightAdapter.controlPosition(clickedPos, clickedState)));
             return InteractionResult.CONSUME;
         }
 

@@ -38,6 +38,13 @@ public final class OriginalLightEvents {
     }
 
     @SubscribeEvent
+    public static void onBreak(BlockEvent.BreakEvent event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            OriginalLightAdapter.removeTarget(level, event.getPos(), event.getState());
+        }
+    }
+
+    @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;

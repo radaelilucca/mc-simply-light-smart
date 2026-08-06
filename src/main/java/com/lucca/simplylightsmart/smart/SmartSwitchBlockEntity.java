@@ -1,6 +1,7 @@
 package com.lucca.simplylightsmart.smart;
 
 import com.lucca.simplylightsmart.block.DimmerLight;
+import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.lucca.simplylightsmart.registry.ModBlockEntities;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,7 +73,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             }
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
             if (targetLevel == null || !targetLevel.hasChunkAt(target.pos())
-                    || !(targetLevel.getBlockState(target.pos()).getBlock() instanceof DimmerLight)) {
+                    || !isValidTarget(targetLevel, target.pos())) {
                 return LinkApplicationResult.failure("invalid_target");
             }
         }
@@ -169,11 +170,21 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         }
         for (GlobalPos target : targets) {
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
-            if (targetLevel != null && targetLevel.hasChunkAt(target.pos())
-                    && targetLevel.getBlockState(target.pos()).getBlock() instanceof DimmerLight dimmer) {
-                dimmer.refreshPower(targetLevel, target.pos(), targetLevel.getBlockState(target.pos()));
+            if (targetLevel == null || !targetLevel.hasChunkAt(target.pos())) {
+                continue;
+            }
+            BlockState targetState = targetLevel.getBlockState(target.pos());
+            if (OriginalLightAdapter.isValidTarget(targetLevel, target.pos())) {
+                OriginalLightAdapter.refreshLocal(targetLevel, target.pos());
+            } else if (targetState.getBlock() instanceof DimmerLight dimmer) {
+                dimmer.refreshPower(targetLevel, target.pos(), targetState);
             }
         }
+    }
+
+    private static boolean isValidTarget(ServerLevel level, BlockPos pos) {
+        return OriginalLightAdapter.isValidTarget(level, pos)
+                || level.getBlockState(pos).getBlock() instanceof DimmerLight;
     }
 
     public record LinkApplicationResult(boolean success, String reason, int linkedCount) {
