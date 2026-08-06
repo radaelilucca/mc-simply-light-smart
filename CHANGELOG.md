@@ -4,6 +4,13 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
+## [0.3.1] - 2026-08-06
+
+### Fixed
+
+- Loading a Sable contraption with pre-existing Simply Light blocks now defers
+  light and Smart Switch updates until chunk restoration has completed.
+
 ## [0.3.0] - 2026-08-06
 
 ### Added
