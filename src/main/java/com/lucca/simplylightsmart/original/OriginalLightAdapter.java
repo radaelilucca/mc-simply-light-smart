@@ -9,10 +9,10 @@ import com.flanks255.simplylight.blocks.RodLamp;
 import com.flanks255.simplylight.blocks.ThinLamp;
 import com.lucca.simplylightsmart.smart.SmartLinkSavedData;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlockEntity;
+import com.lucca.simplylightsmart.smart.SmartTargetAddress;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -160,8 +160,8 @@ public final class OriginalLightAdapter {
         if (!(level instanceof ServerLevel serverLevel)) {
             return level.getBestNeighborSignal(pos);
         }
-        GlobalPos target = SmartSwitchBlockEntity.globalPos(serverLevel, pos);
-        Optional<GlobalPos> owner = SmartLinkSavedData.get(serverLevel).ownerOf(target);
+        SmartTargetAddress target = SmartSwitchBlockEntity.address(serverLevel, pos);
+        Optional<SmartTargetAddress> owner = SmartLinkSavedData.get(serverLevel).ownerOf(target);
         return owner.map(switchPos -> SmartLinkSavedData.get(serverLevel).signalOf(switchPos))
                 .orElseGet(() -> level.getBestNeighborSignal(pos));
     }
@@ -173,15 +173,17 @@ public final class OriginalLightAdapter {
         }
         BlockPos controlPos = controlPosition(pos, state);
         SmartLinkSavedData.get(serverLevel)
-                .removeTarget(SmartSwitchBlockEntity.globalPos(serverLevel, controlPos))
+                .removeTarget(SmartSwitchBlockEntity.address(serverLevel, controlPos))
                 .ifPresent(owner -> {
-                    ServerLevel switchLevel = serverLevel.getServer().getLevel(owner.dimension());
-                    LevelChunk switchChunk = switchLevel == null ? null : switchLevel.getChunkSource().getChunkNow(
-                            owner.pos().getX() >> 4, owner.pos().getZ() >> 4);
-                    if (switchChunk != null
-                            && switchChunk.getBlockEntity(owner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
-                        switchEntity.forgetTarget(SmartSwitchBlockEntity.globalPos(serverLevel, controlPos));
-                    }
+                    owner.resolve(serverLevel).ifPresent(resolvedOwner -> {
+                        ServerLevel switchLevel = serverLevel.getServer().getLevel(resolvedOwner.dimension());
+                        LevelChunk switchChunk = switchLevel == null ? null : switchLevel.getChunkSource().getChunkNow(
+                                resolvedOwner.pos().getX() >> 4, resolvedOwner.pos().getZ() >> 4);
+                        if (switchChunk != null
+                                && switchChunk.getBlockEntity(resolvedOwner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
+                            switchEntity.forgetTarget(SmartSwitchBlockEntity.address(serverLevel, controlPos));
+                        }
+                    });
                 });
     }
 

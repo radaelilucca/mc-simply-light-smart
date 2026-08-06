@@ -3,11 +3,11 @@ package com.lucca.simplylightsmart.item;
 import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.lucca.simplylightsmart.registry.ModDataComponents;
 import com.lucca.simplylightsmart.smart.SmartLinkerSelection;
+import com.lucca.simplylightsmart.smart.SmartTargetAddress;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlockEntity;
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -35,12 +35,12 @@ public final class SmartLinkerItem extends Item {
      * are only meaningful in {@link #selectedDimension(ItemStack)}.
      */
     public static List<BlockPos> selectedTargets(ItemStack stack) {
-        return selection(stack).targets().stream().map(GlobalPos::pos).toList();
+        return selection(stack).targets().stream().map(target -> target.fallback().pos()).toList();
     }
 
     /** The dimension stored for the current selection, or {@code null} when empty. */
     public static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> selectedDimension(ItemStack stack) {
-        return selection(stack).targets().isEmpty() ? null : selection(stack).targets().getFirst().dimension();
+        return selection(stack).targets().isEmpty() ? null : selection(stack).targets().getFirst().fallback().dimension();
     }
 
     /** Clears a proposed selection and returns whether it contained targets. */
@@ -61,7 +61,7 @@ public final class SmartLinkerItem extends Item {
             if (!(context.getPlayer() instanceof ServerPlayer) || !(context.getLevel() instanceof ServerLevel level)) {
                 return InteractionResult.SUCCESS;
             }
-            toggleTarget(stack, GlobalPos.of(level.dimension(), OriginalLightAdapter.controlPosition(clickedPos, clickedState)));
+            toggleTarget(stack, SmartTargetAddress.capture(level, OriginalLightAdapter.controlPosition(clickedPos, clickedState)));
             return InteractionResult.CONSUME;
         }
 
@@ -103,7 +103,7 @@ public final class SmartLinkerItem extends Item {
         return stack.getOrDefault(ModDataComponents.LINKER_SELECTION.get(), SmartLinkerSelection.EMPTY);
     }
 
-    private static void toggleTarget(ItemStack stack, GlobalPos target) {
+    private static void toggleTarget(ItemStack stack, SmartTargetAddress target) {
         stack.set(ModDataComponents.LINKER_SELECTION.get(), selection(stack).toggle(target));
     }
 }

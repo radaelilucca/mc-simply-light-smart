@@ -14,8 +14,8 @@ a restauração dos plot chunks.
 | 1. Fila segura pós-tick | Validada | `b62149c` | Contraption legada carregou normalmente |
 | 2. Defaults e cálculo de estado | Validada | `a318d68` | Emissão e reinício corretos |
 | 3. Metadado e índice persistentes | Validada | `480a6a3` | Reutilização confirmada; fallback seguro para chunks ausentes |
-| 4. Ciclo seguro do Switch | Pronta para teste | — | Links e redstone dentro/fora da contraption |
-| 5. Endereços conscientes de sublevel | Pendente | — | Split, merge e realocação |
+| 4. Ciclo seguro do Switch | Validada | `8163a41` | Links e redstone corretos entre level e sublevel |
+| 5. Endereços conscientes de sublevel | Pronta para teste | — | Split, merge e realocação |
 
 ## Fase 0 — Base de teste
 

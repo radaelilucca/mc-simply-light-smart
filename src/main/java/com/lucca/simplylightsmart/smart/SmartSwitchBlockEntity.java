@@ -11,8 +11,6 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -25,10 +23,8 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
     public static final int MAX_LINKS = 64;
     public static final double MAX_LINK_DISTANCE = 128.0D;
     private static final String TARGETS_TAG = "targets";
-    private static final String DIMENSION_TAG = "dimension";
-    private static final String POSITION_TAG = "position";
 
-    private final Set<GlobalPos> linkedTargets = new LinkedHashSet<>();
+    private final Set<SmartTargetAddress> linkedTargets = new LinkedHashSet<>();
     private int signal;
 
     public SmartSwitchBlockEntity(BlockPos pos, BlockState state) {
@@ -53,12 +49,12 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         return signal;
     }
 
-    public Set<GlobalPos> linkedTargets() {
+    public Set<SmartTargetAddress> linkedTargets() {
         return Set.copyOf(linkedTargets);
     }
 
     /** Called by the linker after it has collected the player's targets. */
-    public LinkApplicationResult applyLinks(ServerPlayer player, List<GlobalPos> requestedTargets) {
+    public LinkApplicationResult applyLinks(ServerPlayer player, List<SmartTargetAddress> requestedTargets) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return LinkApplicationResult.failure("not_server");
         }
@@ -66,22 +62,23 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             return LinkApplicationResult.failure("too_many_targets");
         }
 
-        GlobalPos switchPos = globalPos(serverLevel, worldPosition);
-        LinkedHashSet<GlobalPos> uniqueTargets = new LinkedHashSet<>(requestedTargets);
+        SmartTargetAddress switchPos = address(serverLevel, worldPosition);
+        LinkedHashSet<SmartTargetAddress> uniqueTargets = new LinkedHashSet<>(requestedTargets);
         if (uniqueTargets.size() != requestedTargets.size()) {
             return LinkApplicationResult.failure("duplicate_target");
         }
-        for (GlobalPos target : uniqueTargets) {
-            if (!target.dimension().equals(serverLevel.dimension())) {
+        for (SmartTargetAddress target : uniqueTargets) {
+            GlobalPos resolvedTarget = target.resolve(serverLevel).orElse(null);
+            if (resolvedTarget == null || !resolvedTarget.dimension().equals(serverLevel.dimension())) {
                 return LinkApplicationResult.failure("different_dimension");
             }
-            if (!isWithinLinkRange(serverLevel, worldPosition, target)) {
+            if (!isWithinLinkRange(serverLevel, worldPosition, resolvedTarget)) {
                 return LinkApplicationResult.failure("out_of_range");
             }
-            ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
+            ServerLevel targetLevel = serverLevel.getServer().getLevel(resolvedTarget.dimension());
             LevelChunk targetChunk = targetLevel == null ? null : targetLevel.getChunkSource().getChunkNow(
-                    target.pos().getX() >> 4, target.pos().getZ() >> 4);
-            if (targetChunk == null || !isValidTarget(targetLevel, target.pos())) {
+                    resolvedTarget.pos().getX() >> 4, resolvedTarget.pos().getZ() >> 4);
+            if (targetChunk == null || !isValidTarget(targetLevel, resolvedTarget.pos())) {
                 return LinkApplicationResult.failure("invalid_target");
             }
         }
@@ -91,7 +88,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             return LinkApplicationResult.failure("target_already_linked");
         }
 
-        Set<GlobalPos> previousTargets = Set.copyOf(linkedTargets);
+        Set<SmartTargetAddress> previousTargets = Set.copyOf(linkedTargets);
         linkedTargets.clear();
         linkedTargets.addAll(uniqueTargets);
         setChanged();
@@ -105,15 +102,15 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        Set<GlobalPos> previousTargets = Set.copyOf(linkedTargets);
-        SmartLinkSavedData.get(serverLevel).replaceTargets(globalPos(serverLevel, worldPosition), previousTargets, List.of());
+        Set<SmartTargetAddress> previousTargets = Set.copyOf(linkedTargets);
+        SmartLinkSavedData.get(serverLevel).replaceTargets(address(serverLevel, worldPosition), previousTargets, List.of());
         linkedTargets.clear();
         setChanged();
         enqueueTargetRefreshes(previousTargets);
     }
 
     /** Called when a linked dimmer is destroyed before the switch is unloaded. */
-    public void forgetTarget(GlobalPos target) {
+    public void forgetTarget(SmartTargetAddress target) {
         if (linkedTargets.remove(target)) {
             setChanged();
         }
@@ -125,7 +122,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             return;
         }
         int nextSignal = serverLevel.getBestNeighborSignal(worldPosition);
-        SmartLinkSavedData.get(serverLevel).setSwitchSignal(globalPos(serverLevel, worldPosition), nextSignal);
+        SmartLinkSavedData.get(serverLevel).setSwitchSignal(address(serverLevel, worldPosition), nextSignal);
         if (signal != nextSignal) {
             signal = nextSignal;
             setChanged();
@@ -138,10 +135,9 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         tag.putInt("signal", signal);
         ListTag targets = new ListTag();
-        for (GlobalPos target : linkedTargets) {
+        for (SmartTargetAddress target : linkedTargets) {
             CompoundTag targetTag = new CompoundTag();
-            targetTag.putString(DIMENSION_TAG, target.dimension().location().toString());
-            targetTag.putLong(POSITION_TAG, target.pos().asLong());
+            target.write(targetTag, "");
             targets.add(targetTag);
         }
         tag.put(TARGETS_TAG, targets);
@@ -155,16 +151,12 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         ListTag targets = tag.getList(TARGETS_TAG, CompoundTag.TAG_COMPOUND);
         for (int index = 0; index < targets.size(); index++) {
             CompoundTag target = targets.getCompound(index);
-            ResourceLocation dimensionId = ResourceLocation.tryParse(target.getString(DIMENSION_TAG));
-            if (dimensionId != null && target.contains(POSITION_TAG)) {
-                linkedTargets.add(GlobalPos.of(ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, dimensionId),
-                        BlockPos.of(target.getLong(POSITION_TAG))));
-            }
+            SmartTargetAddress.read(target, "").ifPresent(linkedTargets::add);
         }
     }
 
-    public static GlobalPos globalPos(ServerLevel level, BlockPos pos) {
-        return GlobalPos.of(level.dimension(), pos);
+    public static SmartTargetAddress address(ServerLevel level, BlockPos pos) {
+        return SmartTargetAddress.capture(level, pos);
     }
 
     /** Measures the physical range through Sable Companion when it is present. */
@@ -174,12 +166,12 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
     }
 
     /** Queues linked targets and never forces their chunks to load. */
-    private void enqueueTargetRefreshes(Iterable<GlobalPos> targets) {
+    private void enqueueTargetRefreshes(Iterable<SmartTargetAddress> targets) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        for (GlobalPos target : targets) {
-            DeferredLightWork.enqueueLinkedTargetRefresh(serverLevel, target);
+        for (SmartTargetAddress target : targets) {
+            target.resolve(serverLevel).ifPresent(resolved -> DeferredLightWork.enqueueLinkedTargetRefresh(serverLevel, resolved));
         }
     }
 

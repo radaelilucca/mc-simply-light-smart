@@ -58,7 +58,7 @@ public final class SmartSwitchBlock extends BaseEntityBlock {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof SmartSwitchBlockEntity switchEntity) {
             switchEntity.clearLinks();
-            SmartLinkSavedData.get(serverLevel).removeSwitch(SmartSwitchBlockEntity.globalPos(serverLevel, pos));
+            SmartLinkSavedData.get(serverLevel).removeSwitch(SmartSwitchBlockEntity.address(serverLevel, pos));
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
