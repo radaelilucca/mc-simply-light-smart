@@ -1,5 +1,8 @@
 # Simply Light - Smart!
 
+> **Early-stage development:** Simply Light - Smart! is under active development.
+> Features, balance, recipes, and compatibility may change as the mod evolves.
+
 **Simply Light - Smart!** is a NeoForge addon for
 [Simply Light](https://www.curseforge.com/minecraft/mc-mods/simply-light) that
 adds redstone-dimmable lighting and a wireless-style **Smart Switch** control
