@@ -1,0 +1,27 @@
+package com.lucca.simplylightsmart.mixin;
+
+import com.flanks255.simplylight.blocks.EdgeLight;
+import com.lucca.simplylightsmart.original.OriginalLightAdapter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(value = EdgeLight.class, remap = false)
+abstract class EdgeLightMixin {
+    @Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
+    private void simplyLightSmart$addSmartPower(StateDefinition.Builder<Block, BlockState> builder, CallbackInfo callback) {
+        builder.add(OriginalLightAdapter.SMART_POWER, OriginalLightAdapter.SMART_MODE);
+    }
+
+    @Inject(method = "lambda$new$0", at = @At("HEAD"), cancellable = true)
+    private static void simplyLightSmart$readSmartPower(BlockState state, CallbackInfoReturnable<Integer> callback) {
+        if (OriginalLightAdapter.hasSmartPower(state)) {
+            callback.setReturnValue(state.getValue(OriginalLightAdapter.SMART_POWER));
+        }
+    }
+}

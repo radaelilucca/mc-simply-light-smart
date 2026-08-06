@@ -27,12 +27,15 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class SmartLinkSavedData extends SavedData {
     private static final String DATA_NAME = "simply_light_smart_links";
     private static final String LINKS_TAG = "links";
+    private static final String SWITCH_SIGNALS_TAG = "switch_signals";
     private static final String TARGET_DIMENSION_TAG = "target_dimension";
     private static final String TARGET_POSITION_TAG = "target_position";
     private static final String SWITCH_DIMENSION_TAG = "switch_dimension";
     private static final String SWITCH_POSITION_TAG = "switch_position";
+    private static final String SIGNAL_TAG = "signal";
 
     private final Map<GlobalPos, GlobalPos> switchByTarget = new HashMap<>();
+    private final Map<GlobalPos, Integer> signalBySwitch = new HashMap<>();
 
     public static SmartLinkSavedData get(ServerLevel level) {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(
@@ -50,6 +53,12 @@ public final class SmartLinkSavedData extends SavedData {
                             .map(switchPos -> Map.entry(target, switchPos)))
                     .ifPresent(link -> data.switchByTarget.put(link.getKey(), link.getValue()));
         }
+        ListTag signals = tag.getList(SWITCH_SIGNALS_TAG, CompoundTag.TAG_COMPOUND);
+        for (int index = 0; index < signals.size(); index++) {
+            CompoundTag entry = signals.getCompound(index);
+            readGlobalPos(entry, SWITCH_DIMENSION_TAG, SWITCH_POSITION_TAG)
+                    .ifPresent(switchPos -> data.signalBySwitch.put(switchPos, entry.getInt(SIGNAL_TAG)));
+        }
         return data;
     }
 
@@ -59,6 +68,18 @@ public final class SmartLinkSavedData extends SavedData {
 
     public boolean isOwnedBy(GlobalPos target, GlobalPos switchPos) {
         return switchPos.equals(switchByTarget.get(target));
+    }
+
+    /** Returns the latest signal published by a Switch without loading its chunk. */
+    public int signalOf(GlobalPos switchPos) {
+        return signalBySwitch.getOrDefault(switchPos, 0);
+    }
+
+    /** Stores the latest signal published by a loaded Switch. */
+    public void setSwitchSignal(GlobalPos switchPos, int signal) {
+        if (!Integer.valueOf(signal).equals(signalBySwitch.put(switchPos, signal))) {
+            setDirty();
+        }
     }
 
     /** Finds links in a loaded chunk without requesting any additional chunks. */
@@ -91,7 +112,8 @@ public final class SmartLinkSavedData extends SavedData {
 
     /** Removes every index entry owned by a switch, including stale entries. */
     public void removeSwitch(GlobalPos switchPos) {
-        if (switchByTarget.entrySet().removeIf(entry -> entry.getValue().equals(switchPos))) {
+        boolean linksChanged = switchByTarget.entrySet().removeIf(entry -> entry.getValue().equals(switchPos));
+        if (linksChanged || signalBySwitch.remove(switchPos) != null) {
             setDirty();
         }
     }
@@ -115,6 +137,14 @@ public final class SmartLinkSavedData extends SavedData {
             links.add(entry);
         });
         tag.put(LINKS_TAG, links);
+        ListTag signals = new ListTag();
+        signalBySwitch.forEach((switchPos, signal) -> {
+            CompoundTag entry = new CompoundTag();
+            writeGlobalPos(entry, SWITCH_DIMENSION_TAG, SWITCH_POSITION_TAG, switchPos);
+            entry.putInt(SIGNAL_TAG, signal);
+            signals.add(entry);
+        });
+        tag.put(SWITCH_SIGNALS_TAG, signals);
         return tag;
     }
 

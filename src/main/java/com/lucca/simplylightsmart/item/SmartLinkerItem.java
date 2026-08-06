@@ -1,6 +1,6 @@
 package com.lucca.simplylightsmart.item;
 
-import com.lucca.simplylightsmart.block.AbstractDimmerRotatableLamp;
+import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.lucca.simplylightsmart.registry.ModDataComponents;
 import com.lucca.simplylightsmart.smart.SmartLinkerSelection;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
@@ -18,11 +18,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Selects dimmable lights and applies the complete selection to a Smart
- * Switch. The server owns all mutation and validation; the item only retains
- * the proposed target list between clicks.
+ * Selects original Simply Light fixtures and applies the complete selection to a Smart
+ * Switch. The server owns all mutation and validation; the item retains the
+ * proposed target list until the player clears it manually.
  */
 public final class SmartLinkerItem extends Item {
     public SmartLinkerItem(Properties properties) {
@@ -55,11 +56,12 @@ public final class SmartLinkerItem extends Item {
     public InteractionResult useOn(UseOnContext context) {
         ItemStack stack = context.getItemInHand();
         BlockPos clickedPos = context.getClickedPos();
-        if (context.getLevel().getBlockState(clickedPos).getBlock() instanceof AbstractDimmerRotatableLamp) {
+        BlockState clickedState = context.getLevel().getBlockState(clickedPos);
+        if (OriginalLightAdapter.isLocallyEnabled(clickedState)) {
             if (!(context.getPlayer() instanceof ServerPlayer) || !(context.getLevel() instanceof ServerLevel level)) {
                 return InteractionResult.SUCCESS;
             }
-            toggleTarget(stack, GlobalPos.of(level.dimension(), clickedPos));
+            toggleTarget(stack, GlobalPos.of(level.dimension(), OriginalLightAdapter.controlPosition(clickedPos, clickedState)));
             return InteractionResult.CONSUME;
         }
 
@@ -75,7 +77,6 @@ public final class SmartLinkerItem extends Item {
             if (blockEntity instanceof SmartSwitchBlockEntity switchEntity) {
                 SmartSwitchBlockEntity.LinkApplicationResult result = switchEntity.applyLinks(player, selection(stack).targets());
                 if (result.success()) {
-                    clearSelection(stack);
                     player.displayClientMessage(result.linkedCount() == 0
                             ? Component.translatable("message.simply_light_smart.linker.cleared")
                             : Component.translatable("message.simply_light_smart.linker.applied", result.linkedCount()), true);

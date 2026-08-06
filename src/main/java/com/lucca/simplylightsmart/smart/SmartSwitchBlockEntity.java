@@ -1,6 +1,6 @@
 package com.lucca.simplylightsmart.smart;
 
-import com.lucca.simplylightsmart.block.AbstractDimmerRotatableLamp;
+import com.lucca.simplylightsmart.original.OriginalLightAdapter;
 import com.lucca.simplylightsmart.registry.ModBlockEntities;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 /** Persists and updates the dimmers controlled by a single Smart Switch. */
 public final class SmartSwitchBlockEntity extends BlockEntity {
@@ -36,8 +37,10 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level instanceof ServerLevel) {
+        if (level instanceof ServerLevel serverLevel) {
+            SmartLinkSavedData.get(serverLevel).setSwitchSignal(globalPos(serverLevel, worldPosition), signal);
             refreshSignal();
+            refreshTargets(linkedTargets);
         }
     }
 
@@ -71,8 +74,9 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
                 return LinkApplicationResult.failure("out_of_range");
             }
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
-            if (targetLevel == null || !targetLevel.hasChunkAt(target.pos())
-                    || !(targetLevel.getBlockState(target.pos()).getBlock() instanceof AbstractDimmerRotatableLamp)) {
+            LevelChunk targetChunk = targetLevel == null ? null : targetLevel.getChunkSource().getChunkNow(
+                    target.pos().getX() >> 4, target.pos().getZ() >> 4);
+            if (targetChunk == null || !isValidTarget(targetLevel, target.pos())) {
                 return LinkApplicationResult.failure("invalid_target");
             }
         }
@@ -116,6 +120,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             return;
         }
         int nextSignal = serverLevel.getBestNeighborSignal(worldPosition);
+        SmartLinkSavedData.get(serverLevel).setSwitchSignal(globalPos(serverLevel, worldPosition), nextSignal);
         if (signal != nextSignal) {
             signal = nextSignal;
             setChanged();
@@ -169,11 +174,19 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         }
         for (GlobalPos target : targets) {
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
-            if (targetLevel != null && targetLevel.hasChunkAt(target.pos())
-                    && targetLevel.getBlockState(target.pos()).getBlock() instanceof AbstractDimmerRotatableLamp dimmer) {
-                dimmer.refreshPower(targetLevel, target.pos(), targetLevel.getBlockState(target.pos()));
+            LevelChunk targetChunk = targetLevel == null ? null : targetLevel.getChunkSource().getChunkNow(
+                    target.pos().getX() >> 4, target.pos().getZ() >> 4);
+            if (targetChunk == null) {
+                continue;
+            }
+            if (OriginalLightAdapter.isValidTarget(targetLevel, target.pos())) {
+                OriginalLightAdapter.refreshLocal(targetLevel, target.pos());
             }
         }
+    }
+
+    private static boolean isValidTarget(ServerLevel level, BlockPos pos) {
+        return OriginalLightAdapter.isValidTarget(level, pos);
     }
 
     public record LinkApplicationResult(boolean success, String reason, int linkedCount) {
