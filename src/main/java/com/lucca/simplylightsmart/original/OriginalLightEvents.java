@@ -19,6 +19,7 @@ public final class OriginalLightEvents {
     @SubscribeEvent
     public static void onPlace(BlockEvent.EntityPlaceEvent event) {
         if (event.getLevel() instanceof ServerLevel level) {
+            OriginalLightChunkIndexes.indexPlacedLight(level, event.getPos());
             OriginalLightAdapter.refreshLocal(level, event.getPos());
         }
     }
@@ -43,6 +44,7 @@ public final class OriginalLightEvents {
     @SubscribeEvent
     public static void onBreak(BlockEvent.BreakEvent event) {
         if (event.getLevel() instanceof ServerLevel level) {
+            OriginalLightChunkIndexes.removeBrokenLight(level, event.getPos(), event.getState());
             OriginalLightAdapter.removeTarget(level, event.getPos(), event.getState());
         }
     }
@@ -59,16 +61,6 @@ public final class OriginalLightEvents {
 
     /** Invoked only by {@link DeferredLightWork} after the load tick completes. */
     static void refreshLoadedChunk(ServerLevel level, LevelChunk chunk) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int y = level.getMinBuildHeight(); y < level.getMaxBuildHeight(); y++) {
-            for (int z = chunk.getPos().getMinBlockZ(); z <= chunk.getPos().getMaxBlockZ(); z++) {
-                for (int x = chunk.getPos().getMinBlockX(); x <= chunk.getPos().getMaxBlockX(); x++) {
-                    pos.set(x, y, z);
-                    if (OriginalLightAdapter.isLocallyEnabled(chunk.getBlockState(pos))) {
-                        OriginalLightAdapter.refreshLocal(level, pos);
-                    }
-                }
-            }
-        }
+        OriginalLightChunkIndexes.refreshLoadedChunk(level, chunk);
     }
 }

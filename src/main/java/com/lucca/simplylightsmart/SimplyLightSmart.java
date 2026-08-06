@@ -2,6 +2,7 @@ package com.lucca.simplylightsmart;
 
 import com.lucca.simplylightsmart.registry.ModBlocks;
 import com.lucca.simplylightsmart.registry.ModBlockEntities;
+import com.lucca.simplylightsmart.registry.ModAttachments;
 import com.lucca.simplylightsmart.registry.ModCreativeTabs;
 import com.lucca.simplylightsmart.registry.ModDataComponents;
 import com.lucca.simplylightsmart.registry.ModItems;
@@ -17,6 +18,7 @@ public final class SimplyLightSmart {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public SimplyLightSmart(IEventBus modEventBus) {
+        ModAttachments.register(modEventBus);
         ModDataComponents.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModBlockEntities.register(modEventBus);
