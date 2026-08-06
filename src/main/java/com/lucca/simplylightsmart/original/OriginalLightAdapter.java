@@ -51,12 +51,15 @@ public final class OriginalLightAdapter {
         return state.hasProperty(SMART_POWER);
     }
 
-    /** Phase 2 enables original simple families; connected geometry stays for phase 3. */
+    /** Phase 3 enables all original families for local redstone control. */
     public static boolean isLocallyEnabled(BlockState state) {
         return hasSmartPower(state) && (state.getBlock() instanceof LampBlock
                 || state.getBlock() instanceof LightBulb
                 || state.getBlock() instanceof ThinLamp
-                || state.getBlock() instanceof Fixture);
+                || state.getBlock() instanceof Fixture
+                || state.getBlock() instanceof RodLamp
+                || state.getBlock() instanceof EdgeLight
+                || state.getBlock() instanceof LampPost);
     }
 
     public static void refreshLocal(Level level, BlockPos pos) {
@@ -67,7 +70,46 @@ public final class OriginalLightAdapter {
         if (!isLocallyEnabled(state)) {
             return;
         }
+        if (state.getBlock() instanceof LampPost) {
+            refreshLampPost(level, pos, state);
+            return;
+        }
         applyEmission(level, pos, state, emissionForSignal(state, level.getBestNeighborSignal(pos)));
+    }
+
+    /**
+     * A Lamp Post is one lamp composed of bottom, middle and top BlockStates.
+     * The bottom receives redstone; every matching segment carries the same
+     * persisted value, while the native top segment remains the sole emitter.
+     */
+    private static void refreshLampPost(Level level, BlockPos pos, BlockState state) {
+        BlockPos basePos = lampPostBase(pos, state);
+        BlockState baseState = level.getBlockState(basePos);
+        if (!(baseState.getBlock() instanceof LampPost lampPost)
+                || !isLampPostPart(baseState, lampPost, LampPost.Position.BOTTOM)
+                || !isLampPostPart(level.getBlockState(basePos.above()), lampPost, LampPost.Position.MIDDLE)
+                || !isLampPostPart(level.getBlockState(basePos.above(2)), lampPost, LampPost.Position.TOP)) {
+            return;
+        }
+
+        int emission = emissionForSignal(baseState, level.getBestNeighborSignal(basePos));
+        applyEmission(level, basePos, baseState, emission);
+        applyEmission(level, basePos.above(), level.getBlockState(basePos.above()), emission);
+        applyEmission(level, basePos.above(2), level.getBlockState(basePos.above(2)), emission);
+    }
+
+    private static boolean isLampPostPart(BlockState state, LampPost lampPost, LampPost.Position position) {
+        return state.is(lampPost)
+                && hasSmartPower(state)
+                && state.getValue(LampPost.POSITION) == position;
+    }
+
+    private static BlockPos lampPostBase(BlockPos pos, BlockState state) {
+        return switch (state.getValue(LampPost.POSITION)) {
+            case BOTTOM -> pos;
+            case MIDDLE -> pos.below();
+            case TOP -> pos.below(2);
+        };
     }
 
     /** Writes only smart_power and the native Illuminant Block visual state. */
