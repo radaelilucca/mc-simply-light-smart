@@ -161,15 +161,8 @@ public final class OriginalLightAdapter {
         }
         GlobalPos target = SmartSwitchBlockEntity.globalPos(serverLevel, pos);
         Optional<GlobalPos> owner = SmartLinkSavedData.get(serverLevel).ownerOf(target);
-        return owner.flatMap(switchPos -> {
-                    ServerLevel switchLevel = serverLevel.getServer().getLevel(switchPos.dimension());
-                    if (switchLevel != null && switchLevel.hasChunkAt(switchPos.pos())
-                            && switchLevel.getBlockEntity(switchPos.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
-                        return Optional.of(switchEntity.signal());
-                    }
-                    return Optional.empty();
-                })
-                .orElseGet(() -> owner.isPresent() ? 0 : level.getBestNeighborSignal(pos));
+        return owner.map(switchPos -> SmartLinkSavedData.get(serverLevel).signalOf(switchPos))
+                .orElseGet(() -> level.getBestNeighborSignal(pos));
     }
 
     /** Removes a canonical original-light target from its Switch on break. */

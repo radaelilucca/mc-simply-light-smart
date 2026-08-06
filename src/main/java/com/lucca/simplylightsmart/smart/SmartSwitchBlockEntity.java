@@ -37,8 +37,10 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level instanceof ServerLevel) {
+        if (level instanceof ServerLevel serverLevel) {
+            SmartLinkSavedData.get(serverLevel).setSwitchSignal(globalPos(serverLevel, worldPosition), signal);
             refreshSignal();
+            refreshTargets(linkedTargets);
         }
     }
 
@@ -117,6 +119,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
             return;
         }
         int nextSignal = serverLevel.getBestNeighborSignal(worldPosition);
+        SmartLinkSavedData.get(serverLevel).setSwitchSignal(globalPos(serverLevel, worldPosition), nextSignal);
         if (signal != nextSignal) {
             signal = nextSignal;
             setChanged();
