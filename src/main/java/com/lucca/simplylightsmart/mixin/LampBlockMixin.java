@@ -2,6 +2,8 @@ package com.lucca.simplylightsmart.mixin;
 
 import com.flanks255.simplylight.blocks.LampBlock;
 import com.lucca.simplylightsmart.original.OriginalLightAdapter;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -22,6 +24,20 @@ abstract class LampBlockMixin {
     private static void simplyLightSmart$readSmartPower(BlockState state, CallbackInfoReturnable<Integer> callback) {
         if (OriginalLightAdapter.hasSmartPower(state)) {
             callback.setReturnValue(state.getValue(OriginalLightAdapter.SMART_POWER));
+        }
+    }
+
+    /**
+     * LampBlock normally replaces its entire state with a binary on/off state
+     * on every neighbour update. That discards smart_power, so smart-enabled
+     * Illuminant Blocks must take over this one transition.
+     */
+    @Inject(method = "neighborChanged", at = @At("HEAD"), cancellable = true)
+    private void simplyLightSmart$preserveGraduatedPower(BlockState state, Level level, BlockPos pos,
+            Block neighborBlock, BlockPos neighborPos, boolean movedByPiston, CallbackInfo callback) {
+        if (OriginalLightAdapter.isLocallyEnabled(state)) {
+            OriginalLightAdapter.refreshLocal(level, pos);
+            callback.cancel();
         }
     }
 }
