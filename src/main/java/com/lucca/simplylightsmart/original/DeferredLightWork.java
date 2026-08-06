@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -40,6 +41,17 @@ public final class DeferredLightWork {
     public static void enqueuePositionRefresh(ServerLevel level, BlockPos pos) {
         PositionKey key = new PositionKey(level, pos.asLong());
         POSITION_REFRESHES.put(key, new PendingPosition(nextTick(level.getServer())));
+    }
+
+    /**
+     * Defers a linked target without loading its chunk. The position refresh is
+     * applied only if that chunk is still loaded when its turn arrives.
+     */
+    public static void enqueueLinkedTargetRefresh(ServerLevel sourceLevel, GlobalPos target) {
+        ServerLevel targetLevel = sourceLevel.getServer().getLevel(target.dimension());
+        if (targetLevel != null) {
+            enqueuePositionRefresh(targetLevel, target.pos());
+        }
     }
 
     /** Records a Switch whose persisted state has just become available. */

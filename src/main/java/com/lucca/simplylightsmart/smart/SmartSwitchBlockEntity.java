@@ -39,7 +39,6 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
     public void onLoad() {
         super.onLoad();
         if (level instanceof ServerLevel serverLevel) {
-            SmartLinkSavedData.get(serverLevel).setSwitchSignal(globalPos(serverLevel, worldPosition), signal);
             DeferredLightWork.enqueueSwitchInitialization(serverLevel, worldPosition, this);
         }
     }
@@ -47,7 +46,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
     /** Invoked by deferred work only after the chunk-restoration tick. */
     public void initializeAfterLoad() {
         refreshSignal();
-        refreshTargets(linkedTargets);
+        enqueueTargetRefreshes(linkedTargets);
     }
 
     public int signal() {
@@ -96,8 +95,8 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         linkedTargets.clear();
         linkedTargets.addAll(uniqueTargets);
         setChanged();
-        refreshTargets(previousTargets);
-        refreshTargets(linkedTargets);
+        enqueueTargetRefreshes(previousTargets);
+        enqueueTargetRefreshes(linkedTargets);
         return LinkApplicationResult.success(linkedTargets.size());
     }
 
@@ -110,7 +109,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         SmartLinkSavedData.get(serverLevel).replaceTargets(globalPos(serverLevel, worldPosition), previousTargets, List.of());
         linkedTargets.clear();
         setChanged();
-        refreshTargets(previousTargets);
+        enqueueTargetRefreshes(previousTargets);
     }
 
     /** Called when a linked dimmer is destroyed before the switch is unloaded. */
@@ -130,7 +129,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         if (signal != nextSignal) {
             signal = nextSignal;
             setChanged();
-            refreshTargets(linkedTargets);
+            enqueueTargetRefreshes(linkedTargets);
         }
     }
 
@@ -174,20 +173,13 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
                 <= MAX_LINK_DISTANCE * MAX_LINK_DISTANCE;
     }
 
-    private void refreshTargets(Iterable<GlobalPos> targets) {
+    /** Queues linked targets and never forces their chunks to load. */
+    private void enqueueTargetRefreshes(Iterable<GlobalPos> targets) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
         for (GlobalPos target : targets) {
-            ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
-            LevelChunk targetChunk = targetLevel == null ? null : targetLevel.getChunkSource().getChunkNow(
-                    target.pos().getX() >> 4, target.pos().getZ() >> 4);
-            if (targetChunk == null) {
-                continue;
-            }
-            if (OriginalLightAdapter.isValidTarget(targetLevel, target.pos())) {
-                OriginalLightAdapter.refreshLocal(targetLevel, target.pos());
-            }
+            DeferredLightWork.enqueueLinkedTargetRefresh(serverLevel, target);
         }
     }
 

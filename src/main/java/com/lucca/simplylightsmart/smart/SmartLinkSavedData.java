@@ -1,5 +1,6 @@
 package com.lucca.simplylightsmart.smart;
 
+import com.lucca.simplylightsmart.SimplyLightSmart;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import net.minecraft.world.level.saveddata.SavedData;
  */
 public final class SmartLinkSavedData extends SavedData {
     private static final String DATA_NAME = "simply_light_smart_links";
+    private static final String VERSION_TAG = "version";
+    private static final int CURRENT_VERSION = 1;
     private static final String LINKS_TAG = "links";
     private static final String SWITCH_SIGNALS_TAG = "switch_signals";
     private static final String TARGET_DIMENSION_TAG = "target_dimension";
@@ -45,6 +48,10 @@ public final class SmartLinkSavedData extends SavedData {
 
     public static SmartLinkSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         SmartLinkSavedData data = new SmartLinkSavedData();
+        int version = tag.contains(VERSION_TAG) ? tag.getInt(VERSION_TAG) : 0;
+        if (version > CURRENT_VERSION) {
+            SimplyLightSmart.LOGGER.warn("Loading Smart Link data version {} with reader version {}", version, CURRENT_VERSION);
+        }
         ListTag links = tag.getList(LINKS_TAG, CompoundTag.TAG_COMPOUND);
         for (int index = 0; index < links.size(); index++) {
             CompoundTag entry = links.getCompound(index);
@@ -57,7 +64,7 @@ public final class SmartLinkSavedData extends SavedData {
         for (int index = 0; index < signals.size(); index++) {
             CompoundTag entry = signals.getCompound(index);
             readGlobalPos(entry, SWITCH_DIMENSION_TAG, SWITCH_POSITION_TAG)
-                    .ifPresent(switchPos -> data.signalBySwitch.put(switchPos, entry.getInt(SIGNAL_TAG)));
+                    .ifPresent(switchPos -> data.signalBySwitch.put(switchPos, Math.clamp(entry.getInt(SIGNAL_TAG), 0, 15)));
         }
         return data;
     }
@@ -77,6 +84,7 @@ public final class SmartLinkSavedData extends SavedData {
 
     /** Stores the latest signal published by a loaded Switch. */
     public void setSwitchSignal(GlobalPos switchPos, int signal) {
+        signal = Math.clamp(signal, 0, 15);
         if (!Integer.valueOf(signal).equals(signalBySwitch.put(switchPos, signal))) {
             setDirty();
         }
@@ -129,6 +137,7 @@ public final class SmartLinkSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putInt(VERSION_TAG, CURRENT_VERSION);
         ListTag links = new ListTag();
         switchByTarget.forEach((target, switchPos) -> {
             CompoundTag entry = new CompoundTag();
