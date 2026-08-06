@@ -59,7 +59,12 @@ $families = @(
     "dimmer_lightbulb",
     "dimmer_illuminant_slab",
     "dimmer_illuminant_panel",
-    "dimmer_fixture"
+    "dimmer_fixture",
+    "dimmer_illuminant_block",
+    "dimmer_illuminant_rod",
+    "dimmer_illuminant_edge",
+    "dimmer_illuminant_edge_top",
+    "dimmer_illuminant_column"
 )
 $colors = @(
     "", "black", "blue", "brown", "cyan", "gray", "green", "light_blue",
@@ -76,27 +81,28 @@ foreach ($color in $colors) {
         throw "Expected exactly one $sourceId profile in the shader pack, found $($matches.Count)."
     }
 
-    $dimmerStates = foreach ($family in $families) {
+    # Iris applies a profile without a property predicate to every block state
+    # of that block. Listing power=1 through power=15 creates 4,320 exact
+    # entries, which makes Euphoria's material-map build stall on world join.
+    # The block's vanilla light emission still controls the visible dimming;
+    # this profile only supplies its color.
+    $dimmerBlocks = foreach ($family in $families) {
         foreach ($invertedSuffix in @("", "_inverted")) {
-            foreach ($power in 1..15) {
-                "simply_light_smart:${family}${colorSuffix}${invertedSuffix}:power=$power"
-            }
+            "simply_light_smart:${family}${colorSuffix}${invertedSuffix}"
         }
     }
 
     # Keep the generated property readable and avoid an exceptionally long physical
     # line; the trailing backslash continues the same block.<id> property.
-    $formattedStates = [System.Collections.Generic.List[string]]::new()
-    for ($index = 0; $index -lt $dimmerStates.Count; $index++) {
+    $formattedBlocks = [System.Collections.Generic.List[string]]::new()
+    for ($index = 0; $index -lt $dimmerBlocks.Count; $index++) {
         if ($index -gt 0 -and $index % 10 -eq 0) {
-            $formattedStates.Add(' \' + [Environment]::NewLine + '        ')
+            $formattedBlocks.Add(' \' + [Environment]::NewLine + '        ')
         }
-        $formattedStates.Add($dimmerStates[$index])
+        $formattedBlocks.Add($dimmerBlocks[$index])
     }
 
-    # Do not map power=0: an unpowered normal dimmer (or a fully powered inverted
-    # dimmer) must remain completely dark, just like the vanilla light-level logic.
-    $blockContents = $blockContents -replace $pattern, ('$0 ' + ($formattedStates -join ' '))
+    $blockContents = $blockContents -replace $pattern, ('$0 ' + ($formattedBlocks -join ' '))
 
     $itemMatches = [regex]::Matches($itemContents, $pattern)
     if ($itemMatches.Count -ne 1) {
