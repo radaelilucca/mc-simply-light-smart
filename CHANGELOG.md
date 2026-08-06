@@ -4,6 +4,25 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
+## [0.3.0] - 2026-08-06
+
+### Added
+
+- Redstone-dimmable Illuminant Rods, Illuminant Edges, top-mounted Illuminant
+  Edges, and Illuminant Columns in every dye color, with normal and inverted
+  variants compatible with Smart Switch linking.
+
+### Changed
+
+- The Euphoria colored-lighting helper now covers every implemented dimmer
+  family while using compact profiles that remain responsive when joining a
+  world.
+
+### Fixed
+
+- Illuminant Column dimmers now use the original Simply Light item scale in
+  inventories and the creative tab.
+
 ## [0.2.0] - 2026-08-05
 
 ### Added
