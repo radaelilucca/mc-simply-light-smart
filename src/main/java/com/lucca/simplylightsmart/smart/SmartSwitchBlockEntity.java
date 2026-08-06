@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 /** Persists and updates the dimmers controlled by a single Smart Switch. */
 public final class SmartSwitchBlockEntity extends BlockEntity {
@@ -74,8 +75,9 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
                 return LinkApplicationResult.failure("out_of_range");
             }
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
-            if (targetLevel == null || !targetLevel.hasChunkAt(target.pos())
-                    || !isValidTarget(targetLevel, target.pos())) {
+            LevelChunk targetChunk = targetLevel == null ? null : targetLevel.getChunkSource().getChunkNow(
+                    target.pos().getX() >> 4, target.pos().getZ() >> 4);
+            if (targetChunk == null || !isValidTarget(targetLevel, target.pos(), targetChunk.getBlockState(target.pos()))) {
                 return LinkApplicationResult.failure("invalid_target");
             }
         }
@@ -173,10 +175,12 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         }
         for (GlobalPos target : targets) {
             ServerLevel targetLevel = serverLevel.getServer().getLevel(target.dimension());
-            if (targetLevel == null || !targetLevel.hasChunkAt(target.pos())) {
+            LevelChunk targetChunk = targetLevel == null ? null : targetLevel.getChunkSource().getChunkNow(
+                    target.pos().getX() >> 4, target.pos().getZ() >> 4);
+            if (targetChunk == null) {
                 continue;
             }
-            BlockState targetState = targetLevel.getBlockState(target.pos());
+            BlockState targetState = targetChunk.getBlockState(target.pos());
             if (OriginalLightAdapter.isValidTarget(targetLevel, target.pos())) {
                 OriginalLightAdapter.refreshLocal(targetLevel, target.pos());
             } else if (targetState.getBlock() instanceof DimmerLight dimmer) {
@@ -185,9 +189,9 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         }
     }
 
-    private static boolean isValidTarget(ServerLevel level, BlockPos pos) {
+    private static boolean isValidTarget(ServerLevel level, BlockPos pos, BlockState state) {
         return OriginalLightAdapter.isValidTarget(level, pos)
-                || level.getBlockState(pos).getBlock() instanceof DimmerLight;
+                || state.getBlock() instanceof DimmerLight;
     }
 
     public record LinkApplicationResult(boolean success, String reason, int linkedCount) {

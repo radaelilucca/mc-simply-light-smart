@@ -4,6 +4,8 @@ import com.lucca.simplylightsmart.SimplyLightSmart;
 import com.lucca.simplylightsmart.block.DimmerLight;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.ChunkEvent;
@@ -27,9 +29,14 @@ public final class SmartLinkEvents {
 
     private static void refreshLoadedTargets(ServerLevel level, ChunkPos chunkPos) {
         for (var target : SmartLinkSavedData.get(level).targetsInChunk(level.dimension(), chunkPos)) {
-            if (level.hasChunkAt(target.pos())
-                    && level.getBlockState(target.pos()).getBlock() instanceof DimmerLight dimmer) {
-                dimmer.refreshPower(level, target.pos(), level.getBlockState(target.pos()));
+            LevelChunk targetChunk = level.getChunkSource().getChunkNow(
+                    target.pos().getX() >> 4, target.pos().getZ() >> 4);
+            if (targetChunk == null) {
+                continue;
+            }
+            BlockState targetState = targetChunk.getBlockState(target.pos());
+            if (targetState.getBlock() instanceof DimmerLight dimmer) {
+                dimmer.refreshPower(level, target.pos(), targetState);
             }
         }
     }

@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -175,8 +176,10 @@ public final class OriginalLightAdapter {
                 .removeTarget(SmartSwitchBlockEntity.globalPos(serverLevel, controlPos))
                 .ifPresent(owner -> {
                     ServerLevel switchLevel = serverLevel.getServer().getLevel(owner.dimension());
-                    if (switchLevel != null && switchLevel.hasChunkAt(owner.pos())
-                            && switchLevel.getBlockEntity(owner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
+                    LevelChunk switchChunk = switchLevel == null ? null : switchLevel.getChunkSource().getChunkNow(
+                            owner.pos().getX() >> 4, owner.pos().getZ() >> 4);
+                    if (switchChunk != null
+                            && switchChunk.getBlockEntity(owner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
                         switchEntity.forgetTarget(SmartSwitchBlockEntity.globalPos(serverLevel, controlPos));
                     }
                 });

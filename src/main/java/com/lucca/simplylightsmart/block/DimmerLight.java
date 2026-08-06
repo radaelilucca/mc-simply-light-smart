@@ -9,6 +9,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /** Common redstone and Smart Switch behavior shared by every dimmable light. */
@@ -40,8 +41,10 @@ public interface DimmerLight {
                 .removeTarget(SmartSwitchBlockEntity.globalPos(serverLevel, pos))
                 .ifPresent(owner -> {
                     ServerLevel switchLevel = serverLevel.getServer().getLevel(owner.dimension());
-                    if (switchLevel != null && switchLevel.hasChunkAt(owner.pos())
-                            && switchLevel.getBlockEntity(owner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
+                    LevelChunk switchChunk = switchLevel == null ? null : switchLevel.getChunkSource().getChunkNow(
+                            owner.pos().getX() >> 4, owner.pos().getZ() >> 4);
+                    if (switchChunk != null
+                            && switchChunk.getBlockEntity(owner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
                         switchEntity.forgetTarget(SmartSwitchBlockEntity.globalPos(serverLevel, pos));
                     }
                 });
@@ -49,19 +52,10 @@ public interface DimmerLight {
 
     private static int remoteSignal(Level level, BlockPos pos) {
         if (level instanceof ServerLevel serverLevel) {
-            return SmartLinkSavedData.get(serverLevel)
-                    .ownerOf(SmartSwitchBlockEntity.globalPos(serverLevel, pos))
-                    .flatMap(owner -> {
-                        ServerLevel switchLevel = serverLevel.getServer().getLevel(owner.dimension());
-                        if (switchLevel != null && switchLevel.hasChunkAt(owner.pos())
-                                && switchLevel.getBlockEntity(owner.pos()) instanceof SmartSwitchBlockEntity switchEntity) {
-                            return java.util.Optional.of(switchEntity.signal());
-                        }
-                        return java.util.Optional.empty();
-                    })
-                    .orElseGet(() -> SmartLinkSavedData.get(serverLevel)
-                            .ownerOf(SmartSwitchBlockEntity.globalPos(serverLevel, pos))
-                            .isPresent() ? 0 : level.getBestNeighborSignal(pos));
+            SmartLinkSavedData links = SmartLinkSavedData.get(serverLevel);
+            return links.ownerOf(SmartSwitchBlockEntity.globalPos(serverLevel, pos))
+                    .map(links::signalOf)
+                    .orElseGet(() -> level.getBestNeighborSignal(pos));
         }
         return level.getBestNeighborSignal(pos);
     }
