@@ -18,8 +18,8 @@ arquitetura estiver pronta.
 
 ## Comportamento de redstone proposto
 
-Para famílias que o Simply Light disponibiliza em uma única variante, o
-comportamento será sempre de dimmer inverso:
+Para famílias que o Simply Light disponibiliza em uma única variante, o modo
+`native` começa ligado e dimeriza para baixo:
 
 | Sinal de redstone | Emissão de luz |
 | --- | --- |
@@ -30,6 +30,12 @@ comportamento será sempre de dimmer inverso:
 Isso se aplica a lightbulbs, slabs, panels, fixtures, rods, edge lights e
 columns, em todas as cores. Não haverá item normal e item invertido para essas
 famílias.
+
+Cada bloco também reserva o estado persistente `smart_mode`. Além de `native`,
+ele comportará `default_on` (dimmer para baixo) e `default_off` (dimmer para
+cima). A interface para trocar o modo será adicionada junto ao controle do
+Linker; a reserva no BlockState evita criar IDs, itens ou blocos-entidade para
+essa configuração.
 
 Os Illuminant Blocks são a exceção intencional. O Simply Light já tem dois IDs
 nativos para cada cor: `illuminant_*_block` e `illuminant_*_block_on`.

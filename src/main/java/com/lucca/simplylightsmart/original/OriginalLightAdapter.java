@@ -13,7 +13,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.util.StringRepresentable;
 
 /**
  * Shared contract for applying dimmer state to original Simply Light blocks.
@@ -22,6 +24,12 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
  */
 public final class OriginalLightAdapter {
     public static final IntegerProperty SMART_POWER = IntegerProperty.create("smart_power", 0, 15);
+    /**
+     * Native keeps the source block's conventional default. Explicit modes are
+     * stored in BlockState so a future Linker action can configure one lamp
+     * without a block entity or a second block ID.
+     */
+    public static final EnumProperty<DimmerMode> SMART_MODE = EnumProperty.create("smart_mode", DimmerMode.class);
 
     private static final List<FamilyDefinition> FAMILIES = List.of(
             new FamilyDefinition("illuminant_block", LampBlock.class, BrightnessCurve.NATIVE_PAIR),
@@ -43,9 +51,12 @@ public final class OriginalLightAdapter {
         return state.hasProperty(SMART_POWER);
     }
 
-    /** Only the confirmed Lightbulb spike is active until phase 2 enables simple families. */
+    /** Phase 2 enables original simple families; connected geometry stays for phase 3. */
     public static boolean isLocallyEnabled(BlockState state) {
-        return state.getBlock() instanceof LightBulb && hasSmartPower(state);
+        return hasSmartPower(state) && (state.getBlock() instanceof LampBlock
+                || state.getBlock() instanceof LightBulb
+                || state.getBlock() instanceof ThinLamp
+                || state.getBlock() instanceof Fixture);
     }
 
     public static void refreshLocal(Level level, BlockPos pos) {
@@ -75,18 +86,43 @@ public final class OriginalLightAdapter {
 
     public static int emissionForSignal(BlockState state, int signal) {
         int clampedSignal = Math.clamp(signal, 0, 15);
+        return switch (state.getValue(SMART_MODE)) {
+            case DEFAULT_ON -> 15 - clampedSignal;
+            case DEFAULT_OFF -> clampedSignal;
+            case NATIVE -> nativeEmissionForSignal(state, clampedSignal);
+        };
+    }
+
+    private static int nativeEmissionForSignal(BlockState state, int signal) {
         FamilyDefinition family = family(state).orElseThrow();
         if (family.curve() == BrightnessCurve.NATIVE_PAIR
                 && state.getBlock() instanceof LampBlock lampBlock
                 && !lampBlock.Default) {
-            return clampedSignal;
+            return signal;
         }
-        return 15 - clampedSignal;
+        return 15 - signal;
     }
 
     public enum BrightnessCurve {
         INVERTED,
         NATIVE_PAIR
+    }
+
+    public enum DimmerMode implements StringRepresentable {
+        NATIVE("native"),
+        DEFAULT_ON("default_on"),
+        DEFAULT_OFF("default_off");
+
+        private final String serializedName;
+
+        DimmerMode(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String getSerializedName() {
+            return serializedName;
+        }
     }
 
     public record FamilyDefinition(String id, Class<? extends Block> blockType, BrightnessCurve curve) {

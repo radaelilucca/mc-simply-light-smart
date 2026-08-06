@@ -18,6 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class RotatableLampStateMixin {
     @Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
     private void simplyLightSmart$addSmartPower(StateDefinition.Builder<Block, BlockState> builder, CallbackInfo callback) {
-        builder.add(OriginalLightAdapter.SMART_POWER);
+        builder.add(OriginalLightAdapter.SMART_POWER, OriginalLightAdapter.SMART_MODE);
     }
 }

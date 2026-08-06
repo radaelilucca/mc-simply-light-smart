@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class LampBlockMixin {
     @Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
     private void simplyLightSmart$addSmartPower(StateDefinition.Builder<Block, BlockState> builder, CallbackInfo callback) {
-        builder.add(OriginalLightAdapter.SMART_POWER);
+        builder.add(OriginalLightAdapter.SMART_POWER, OriginalLightAdapter.SMART_MODE);
     }
 
     @Inject(method = "lambda$new$1", at = @At("HEAD"), cancellable = true)
