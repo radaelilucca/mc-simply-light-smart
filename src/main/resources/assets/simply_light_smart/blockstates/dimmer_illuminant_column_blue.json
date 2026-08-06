@@ -1,0 +1,13 @@
+﻿{
+    "variants":  {
+                     "position=top":  {
+                                          "model":  "simply_light_smart:block/dimmer_illuminant_column_top_blue"
+                                      },
+                     "position=middle":  {
+                                             "model":  "simplylight:block/post_mid"
+                                         },
+                     "position=bottom":  {
+                                             "model":  "simplylight:block/post_base"
+                                         }
+                 }
+}

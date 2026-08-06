@@ -1,0 +1,7 @@
+﻿{
+    "textures":  {
+                     "particle":  "simplylight:block/omni/omni_red",
+                     "0":  "simplylight:block/omni/omni_red"
+                 },
+    "parent":  "simply_light_smart:block/dimmer_illuminant_edge_base"
+}

@@ -2,8 +2,11 @@ package com.lucca.simplylightsmart.registry;
 
 import com.lucca.simplylightsmart.SimplyLightSmart;
 import com.lucca.simplylightsmart.block.DimmerFixture;
+import com.lucca.simplylightsmart.block.DimmerEdgeLight;
 import com.lucca.simplylightsmart.block.DimmerIlluminantBlock;
 import com.lucca.simplylightsmart.block.DimmerLightBulb;
+import com.lucca.simplylightsmart.block.DimmerLampPost;
+import com.lucca.simplylightsmart.block.DimmerRodLamp;
 import com.lucca.simplylightsmart.block.DimmerThinLamp;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
 import java.util.EnumMap;
@@ -42,6 +45,14 @@ public final class ModBlocks {
     private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_FIXTURES = new EnumMap<>(DyeColor.class);
     private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_ILLUMINANT_BLOCKS = new EnumMap<>(DyeColor.class);
     private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_ILLUMINANT_BLOCKS = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_RODS = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_RODS = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_EDGES = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_EDGES = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_EDGES_TOP = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_EDGES_TOP = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> DIMMER_COLUMNS = new EnumMap<>(DyeColor.class);
+    private static final Map<DyeColor, DeferredItem<BlockItem>> INVERTED_DIMMER_COLUMNS = new EnumMap<>(DyeColor.class);
 
     public static final DeferredBlock<SmartSwitchBlock> SMART_SWITCH = BLOCKS.register("smart_switch", () ->
             new SmartSwitchBlock(BlockBehaviour.Properties.of()
@@ -63,6 +74,14 @@ public final class ModBlocks {
             registerBlock("dimmer_fixture", color, true, INVERTED_DIMMER_FIXTURES, DimmerFixture::new);
             registerBlock("dimmer_illuminant_block", color, false, DIMMER_ILLUMINANT_BLOCKS, DimmerIlluminantBlock::new);
             registerBlock("dimmer_illuminant_block", color, true, INVERTED_DIMMER_ILLUMINANT_BLOCKS, DimmerIlluminantBlock::new);
+            registerBlock("dimmer_illuminant_rod", color, false, DIMMER_RODS, DimmerRodLamp::new);
+            registerBlock("dimmer_illuminant_rod", color, true, INVERTED_DIMMER_RODS, DimmerRodLamp::new);
+            registerBlock("dimmer_illuminant_edge", color, false, DIMMER_EDGES, (dyeColor, inverted) -> new DimmerEdgeLight(false, dyeColor, inverted));
+            registerBlock("dimmer_illuminant_edge", color, true, INVERTED_DIMMER_EDGES, (dyeColor, inverted) -> new DimmerEdgeLight(false, dyeColor, inverted));
+            registerBlock("dimmer_illuminant_edge_top", color, false, DIMMER_EDGES_TOP, (dyeColor, inverted) -> new DimmerEdgeLight(true, dyeColor, inverted));
+            registerBlock("dimmer_illuminant_edge_top", color, true, INVERTED_DIMMER_EDGES_TOP, (dyeColor, inverted) -> new DimmerEdgeLight(true, dyeColor, inverted));
+            registerBlock("dimmer_illuminant_column", color, false, DIMMER_COLUMNS, DimmerLampPost::new);
+            registerBlock("dimmer_illuminant_column", color, true, INVERTED_DIMMER_COLUMNS, DimmerLampPost::new);
         }
     }
 
@@ -89,6 +108,14 @@ public final class ModBlocks {
         addItems(output, INVERTED_DIMMER_FIXTURES);
         addItems(output, DIMMER_ILLUMINANT_BLOCKS);
         addItems(output, INVERTED_DIMMER_ILLUMINANT_BLOCKS);
+        addItems(output, DIMMER_RODS);
+        addItems(output, INVERTED_DIMMER_RODS);
+        addItems(output, DIMMER_EDGES);
+        addItems(output, INVERTED_DIMMER_EDGES);
+        addItems(output, DIMMER_EDGES_TOP);
+        addItems(output, INVERTED_DIMMER_EDGES_TOP);
+        addItems(output, DIMMER_COLUMNS);
+        addItems(output, INVERTED_DIMMER_COLUMNS);
         output.accept(SMART_SWITCH_ITEM.get());
     }
 

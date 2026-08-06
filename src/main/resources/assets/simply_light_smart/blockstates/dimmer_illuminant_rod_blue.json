@@ -1,0 +1,16 @@
+﻿{
+    "variants":  {
+                     "axis=y":  {
+                                    "model":  "simply_light_smart:block/dimmer_illuminant_rod_blue"
+                                },
+                     "axis=x":  {
+                                    "y":  90,
+                                    "model":  "simply_light_smart:block/dimmer_illuminant_rod_blue",
+                                    "x":  90
+                                },
+                     "axis=z":  {
+                                    "model":  "simply_light_smart:block/dimmer_illuminant_rod_blue",
+                                    "x":  90
+                                }
+                 }
+}

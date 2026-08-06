@@ -18,6 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Selects dimmable lights and applies the complete selection to a Smart
@@ -55,11 +56,12 @@ public final class SmartLinkerItem extends Item {
     public InteractionResult useOn(UseOnContext context) {
         ItemStack stack = context.getItemInHand();
         BlockPos clickedPos = context.getClickedPos();
-        if (context.getLevel().getBlockState(clickedPos).getBlock() instanceof DimmerLight) {
+        BlockState clickedState = context.getLevel().getBlockState(clickedPos);
+        if (clickedState.getBlock() instanceof DimmerLight dimmer) {
             if (!(context.getPlayer() instanceof ServerPlayer) || !(context.getLevel() instanceof ServerLevel level)) {
                 return InteractionResult.SUCCESS;
             }
-            toggleTarget(stack, GlobalPos.of(level.dimension(), clickedPos));
+            toggleTarget(stack, GlobalPos.of(level.dimension(), dimmer.linkPosition(level, clickedPos, clickedState)));
             return InteractionResult.CONSUME;
         }
 

@@ -1,0 +1,24 @@
+﻿{
+    "pattern":  [
+                    "AAA",
+                    "ARA",
+                    "AAA"
+                ],
+    "show_notification":  false,
+    "type":  "minecraft:crafting_shaped",
+    "key":  {
+                "R":  {
+                          "item":  "minecraft:redstone"
+                      },
+                "A":  {
+                          "item":  {
+                                       "Current":  null
+                                   }
+                      }
+            },
+    "category":  "misc",
+    "result":  {
+                   "count":  8,
+                   "id":  "simply_light_smart:dimmer_illuminant_edge_top_lime"
+               }
+}

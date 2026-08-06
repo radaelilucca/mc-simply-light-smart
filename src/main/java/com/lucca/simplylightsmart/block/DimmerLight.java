@@ -5,15 +5,27 @@ import com.lucca.simplylightsmart.smart.SmartSwitchBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 /** Common redstone and Smart Switch behavior shared by every dimmable light. */
 public interface DimmerLight {
     IntegerProperty POWER = BlockStateProperties.POWER;
 
     void refreshPower(Level level, BlockPos pos, BlockState state);
+
+    /** Returns the position stored by the Linker for this light. */
+    default BlockPos linkPosition(Level level, BlockPos pos, BlockState state) {
+        return pos;
+    }
+
+    /** Returns the exact geometry drawn by the Linker's selection outline. */
+    default VoxelShape linkOutlineShape(BlockGetter level, BlockPos pos, BlockState state) {
+        return state.getShape(level, pos);
+    }
 
     static int power(Level level, BlockPos pos, boolean inverted) {
         int signal = remoteSignal(level, pos);

@@ -1,0 +1,79 @@
+﻿{
+    "multipart":  [
+                      {
+                          "when":  {
+                                       "OR":  [
+                                                  {
+                                                      "north":  "true"
+                                                  },
+                                                  {
+                                                      "north":  "false",
+                                                      "south":  "false",
+                                                      "west":  "false",
+                                                      "east":  "false"
+                                                  }
+                                              ]
+                                   },
+                          "apply":  {
+                                        "model":  "simply_light_smart:block/dimmer_illuminant_edge_lime",
+                                        "y":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "OR":  [
+                                                  {
+                                                      "south":  "true"
+                                                  },
+                                                  {
+                                                      "north":  "false",
+                                                      "south":  "false",
+                                                      "west":  "false",
+                                                      "east":  "false"
+                                                  }
+                                              ]
+                                   },
+                          "apply":  {
+                                        "model":  "simply_light_smart:block/dimmer_illuminant_edge_lime"
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "OR":  [
+                                                  {
+                                                      "east":  "true"
+                                                  },
+                                                  {
+                                                      "north":  "false",
+                                                      "south":  "false",
+                                                      "west":  "false",
+                                                      "east":  "false"
+                                                  }
+                                              ]
+                                   },
+                          "apply":  {
+                                        "model":  "simply_light_smart:block/dimmer_illuminant_edge_lime",
+                                        "y":  270
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "OR":  [
+                                                  {
+                                                      "west":  "true"
+                                                  },
+                                                  {
+                                                      "north":  "false",
+                                                      "south":  "false",
+                                                      "west":  "false",
+                                                      "east":  "false"
+                                                  }
+                                              ]
+                                   },
+                          "apply":  {
+                                        "model":  "simply_light_smart:block/dimmer_illuminant_edge_lime",
+                                        "y":  90
+                                    }
+                      }
+                  ]
+}
