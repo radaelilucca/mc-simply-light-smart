@@ -1,7 +1,10 @@
 package com.lucca.simplylightsmart.smart;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import java.util.List;
+import java.util.Optional;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -15,7 +18,17 @@ import net.minecraft.network.codec.StreamCodec;
  */
 public record SmartLinkerSelection(List<SmartTargetAddress> targets) {
     public static final SmartLinkerSelection EMPTY = new SmartLinkerSelection(List.of());
-    public static final Codec<SmartLinkerSelection> CODEC = SmartTargetAddress.CODEC.listOf()
+    /**
+     * Reads Linkers saved before sublevel-aware addresses existed. Such items
+     * stored a raw GlobalPos list; normal saves are encoded exclusively with
+     * the current SmartTargetAddress format after the next item save.
+     */
+    private static final Codec<SmartTargetAddress> TARGET_CODEC = Codec.either(SmartTargetAddress.CODEC, GlobalPos.CODEC)
+            .xmap(value -> value.map(address -> address,
+                            legacy -> new SmartTargetAddress(legacy, Optional.empty())),
+                    Either::left);
+
+    public static final Codec<SmartLinkerSelection> CODEC = TARGET_CODEC.listOf()
             .xmap(SmartLinkerSelection::new, SmartLinkerSelection::targets);
     public static final StreamCodec<RegistryFriendlyByteBuf, SmartLinkerSelection> STREAM_CODEC =
             ByteBufCodecs.fromCodecWithRegistries(CODEC);
