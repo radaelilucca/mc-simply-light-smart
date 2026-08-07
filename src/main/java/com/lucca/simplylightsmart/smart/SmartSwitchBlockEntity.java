@@ -41,7 +41,6 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
 
     /** Invoked by deferred work only after the chunk-restoration tick. */
     public void initializeAfterLoad() {
-        normalizeLinkedTargets();
         refreshSignal();
         enqueueTargetRefreshes(linkedTargets);
     }
@@ -103,7 +102,6 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        normalizeLinkedTargets();
         Set<SmartTargetAddress> previousTargets = Set.copyOf(linkedTargets);
         SmartLinkSavedData.get(serverLevel).replaceTargets(address(serverLevel, worldPosition), previousTargets, List.of());
         linkedTargets.clear();
@@ -113,12 +111,7 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
 
     /** Called when a linked dimmer is destroyed before the switch is unloaded. */
     public void forgetTarget(SmartTargetAddress target) {
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        SmartTargetAddress canonicalTarget = SmartLinkSavedData.get(serverLevel).canonicalAddress(target);
-        if (linkedTargets.removeIf(linkedTarget -> SmartLinkSavedData.get(serverLevel)
-                .canonicalAddress(linkedTarget).equals(canonicalTarget))) {
+        if (linkedTargets.remove(target)) {
             setChanged();
         }
     }
@@ -128,7 +121,6 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        normalizeLinkedTargets();
         int nextSignal = serverLevel.getBestNeighborSignal(worldPosition);
         SmartLinkSavedData.get(serverLevel).setSwitchSignal(address(serverLevel, worldPosition), nextSignal);
         if (signal != nextSignal) {
@@ -180,23 +172,6 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         }
         for (SmartTargetAddress target : targets) {
             target.resolve(serverLevel).ifPresent(resolved -> DeferredLightWork.enqueueLinkedTargetRefresh(serverLevel, resolved));
-        }
-    }
-
-    /** Applies persisted Sable address migrations after this Switch becomes available. */
-    private void normalizeLinkedTargets() {
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        SmartLinkSavedData links = SmartLinkSavedData.get(serverLevel);
-        LinkedHashSet<SmartTargetAddress> normalized = new LinkedHashSet<>();
-        for (SmartTargetAddress target : linkedTargets) {
-            normalized.add(links.canonicalAddress(target));
-        }
-        if (!normalized.equals(linkedTargets)) {
-            linkedTargets.clear();
-            linkedTargets.addAll(normalized);
-            setChanged();
         }
     }
 

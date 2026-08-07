@@ -15,7 +15,7 @@ a restauração dos plot chunks.
 | 2. Defaults e cálculo de estado | Validada | `a318d68` | Emissão e reinício corretos |
 | 3. Metadado e índice persistentes | Validada | `480a6a3` | Reutilização confirmada; fallback seguro para chunks ausentes |
 | 4. Ciclo seguro do Switch | Validada | `8163a41` | Links e redstone corretos entre level e sublevel |
-| 5. Endereços conscientes de sublevel | Em correção | `0e3b4e4` | Split e merge precisam de nova validação |
+| 5. Endereços conscientes de sublevel | Adiada | — | Split e merge ficam fora do escopo da correção crítica |
 
 ## Fase 0 — Base de teste
 
@@ -66,9 +66,12 @@ Ponto de teste: abrir duas vezes o mapa de regressão sem remover as luzes.
   mantendo `GlobalPos` para o mundo normal.
 - Migrar entradas legadas de forma preguiçosa quando elas puderem ser
   resolvidas.
-- Migrar imediatamente os endereços afetados pelo split, usando a transformação
-  de origem fornecida pelo Sable antes que ela seja descartada.
 - Validar assemble, disassemble, split, merge e realocação.
+
+> O suporte a split e merge depende de reconciliação confiável da topologia
+> criada pelo Sable. Ele fica explicitamente adiado para uma etapa própria;
+> não bloqueia a compatibilidade de carregamento e os links já validados entre
+> levels e sublevels.
 
 ## Critérios de aceite
 
