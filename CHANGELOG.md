@@ -4,6 +4,12 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
+## [0.3.3] - 2026-08-07
+
+### Fixed
+
+- Fixed a server crash that could occur while loading Sable contraptions.
+
 ## [0.3.2] - 2026-08-07
 
 ### Fixed
