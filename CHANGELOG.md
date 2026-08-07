@@ -4,6 +4,19 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
+## [0.3.2] - 2026-08-07
+
+### Fixed
+
+- Smart Switch links now restore safely for original Simply Light lights in
+  Sable contraptions that existed before the addon was installed.
+- Smart Switch control now remains reliable between the main level and Sable
+  sublevels.
+- Smart Linker selections saved by earlier addon versions now migrate safely
+  to the current link format.
+- Original Simply Light lights now start from the appropriate smart dimming
+  state when first managed by the addon.
+
 ## [0.3.1] - 2026-08-06
 
 ### Fixed
