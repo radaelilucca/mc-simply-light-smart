@@ -3,6 +3,9 @@ package com.lucca.simplylightsmart.smart;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Optional;
@@ -27,6 +30,7 @@ import net.minecraft.world.level.Level;
 public record SmartTargetAddress(GlobalPos fallback, Optional<SubLevelReference> subLevel) {
     private static final String COMPANION_CLASS = "dev.ryanhcode.sable.companion.SableCompanion";
     private static final String CONTAINER_CLASS = "dev.ryanhcode.sable.api.sublevel.SubLevelContainer";
+    private static final String SERVER_CONTAINER_CLASS = "dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer";
     private static final Codec<UUID> UUID_CODEC = Codec.STRING.comapFlatMap(value -> {
         try {
             return DataResult.success(UUID.fromString(value));
@@ -83,8 +87,8 @@ public record SmartTargetAddress(GlobalPos fallback, Optional<SubLevelReference>
             return Optional.empty();
         }
         try {
-            Object container = activeBridge.getContainer.invoke(null, targetLevel);
-            Object resolvedSubLevel = activeBridge.getSubLevel.invoke(container, subLevel.get().id());
+            Object container = invoke(activeBridge.getContainer, targetLevel);
+            Object resolvedSubLevel = invoke(activeBridge.getSubLevel, container, subLevel.get().id());
             if (resolvedSubLevel == null) {
                 return Optional.empty();
             }
@@ -169,27 +173,46 @@ public record SmartTargetAddress(GlobalPos fallback, Optional<SubLevelReference>
             ClassLoader loader = SmartTargetAddress.class.getClassLoader();
             Class<?> companionClass = Class.forName(COMPANION_CLASS, false, loader);
             Class<?> containerClass = Class.forName(CONTAINER_CLASS, false, loader);
+            Class<?> serverContainerClass = Class.forName(SERVER_CONTAINER_CLASS, false, loader);
             Field instance = companionClass.getField("INSTANCE");
             Class<?> subLevelClass = Class.forName("dev.ryanhcode.sable.sublevel.SubLevel", false, loader);
             Class<?> plotClass = Class.forName("dev.ryanhcode.sable.sublevel.plot.LevelPlot", false, loader);
+            MethodHandles.Lookup lookup = MethodHandles.publicLookup();
             bridge = new Bridge(
                     instance.get(null),
                     companionClass.getMethod("getContaining", Level.class, net.minecraft.core.Position.class),
                     subLevelClass.getMethod("getUniqueId"),
                     subLevelClass.getMethod("getPlot"),
                     plotClass.getMethod("getChunkMin"),
-                    containerClass.getMethod("getContainer", ServerLevel.class),
-                    containerClass.getMethod("getSubLevel", UUID.class));
+                    lookup.findStatic(containerClass, "getContainer",
+                            MethodType.methodType(serverContainerClass, ServerLevel.class)),
+                    lookup.findVirtual(containerClass, "getSubLevel", MethodType.methodType(subLevelClass, UUID.class)));
         } catch (ReflectiveOperationException | LinkageError ignored) {
             bridge = null;
         }
         return bridge;
     }
 
+    /**
+     * Invokes a server-only Sable handle without scanning every overload on the
+     * declaring class. Reflection through {@code Class#getMethod} is unsafe
+     * here because Sable's shared container also declares a client-only
+     * overload, which dedicated servers must never resolve.
+     */
+    private static Object invoke(MethodHandle method, Object... arguments) throws ReflectiveOperationException {
+        try {
+            return method.invokeWithArguments(arguments);
+        } catch (VirtualMachineError exception) {
+            throw exception;
+        } catch (Throwable exception) {
+            throw new ReflectiveOperationException("Could not invoke Sable server bridge", exception);
+        }
+    }
+
     public record SubLevelReference(UUID id, BlockPos localPos) {
     }
 
     private record Bridge(Object companion, Method getContaining, Method getUniqueId, Method getPlot, Method getChunkMin,
-                          Method getContainer, Method getSubLevel) {
+                          MethodHandle getContainer, MethodHandle getSubLevel) {
     }
 }
