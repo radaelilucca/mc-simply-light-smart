@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "tools",
+  "ingredients": [
+    { "item": "simply_light_smart:smart_linker" },
+    { "item": "minecraft:compass" }
+  ],
+  "result": {
+    "id": "simply_light_smart:smart_debugger",
+    "count": 1
+  }
+}

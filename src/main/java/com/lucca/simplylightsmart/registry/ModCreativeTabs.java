@@ -18,6 +18,7 @@ public final class ModCreativeTabs {
                 .displayItems((parameters, output) -> {
                     ModBlocks.addControlItems(output);
                     output.accept(ModItems.SMART_LINKER.get());
+                    output.accept(ModItems.SMART_DEBUGGER.get());
                 })
                 .build());
     }

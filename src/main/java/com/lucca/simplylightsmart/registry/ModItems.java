@@ -1,6 +1,7 @@
 package com.lucca.simplylightsmart.registry;
 
 import com.lucca.simplylightsmart.SimplyLightSmart;
+import com.lucca.simplylightsmart.item.SmartDebuggerItem;
 import com.lucca.simplylightsmart.item.SmartLinkerItem;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -12,6 +13,9 @@ public final class ModItems {
 
     public static final DeferredItem<SmartLinkerItem> SMART_LINKER = ITEMS.registerItem(
             "smart_linker", SmartLinkerItem::new);
+
+    public static final DeferredItem<SmartDebuggerItem> SMART_DEBUGGER = ITEMS.registerItem(
+            "smart_debugger", SmartDebuggerItem::new);
 
     private ModItems() {
     }

@@ -1,6 +1,7 @@
 {
   "block.simply_light_smart.smart_switch": "Smart Switch",
   "item.simply_light_smart.smart_linker": "Smart Linker",
+  "item.simply_light_smart.smart_debugger": "Smart Debugger",
   "tooltip.simply_light_smart.smart_linker.selected": "%s lights selected",
   "message.simply_light_smart.linker.applied": "Linked %s lights to the Smart Switch",
   "message.simply_light_smart.linker.cleared": "Removed all Smart Switch links",
@@ -13,5 +14,18 @@
   "message.simply_light_smart.linker.reason.out_of_range": "a light is more than 128 blocks away",
   "message.simply_light_smart.linker.reason.invalid_target": "the selection contains an unavailable light",
   "message.simply_light_smart.linker.reason.target_already_linked": "a light is already linked to another Smart Switch",
+  "message.simply_light_smart.debugger.not_supported": "[Smart Debugger] %s is not a supported light or Smart Switch.",
+  "message.simply_light_smart.debugger.header": "[Smart Debugger] %s at %s",
+  "message.simply_light_smart.debugger.light_state": "  Mode: %s | smart_power: %s | local redstone: %s",
+  "message.simply_light_smart.debugger.link.none": "  Link: none (using local redstone)",
+  "message.simply_light_smart.debugger.link.owner": "  Link owner: %s | stored signal: %s",
+  "message.simply_light_smart.debugger.owner.loaded": "  Owner status: loaded Smart Switch (signal: %s, targets: %s)",
+  "message.simply_light_smart.debugger.owner.unloaded": "  Owner status: chunk not loaded; stored signal is in use",
+  "message.simply_light_smart.debugger.owner.unresolved": "  Owner status: cannot resolve its location; link may be stale",
+  "message.simply_light_smart.debugger.owner.stale": "  Owner status: no Smart Switch at its saved location; link is stale",
+  "message.simply_light_smart.debugger.effective_signal": "  Effective signal: %s | expected emission: %s",
+  "message.simply_light_smart.debugger.switch.header": "[Smart Debugger] Smart Switch at %s",
+  "message.simply_light_smart.debugger.switch.state": "  Signal: %s | linked targets: %s",
+  "message.simply_light_smart.debugger.switch.missing": "[Smart Debugger] The Smart Switch block entity is missing at %s.",
   "itemGroup.simply_light_smart.main": "Simply Light - Smart!"
 }
