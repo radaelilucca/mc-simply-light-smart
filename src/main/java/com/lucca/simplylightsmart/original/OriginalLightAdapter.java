@@ -8,11 +8,13 @@ import com.flanks255.simplylight.blocks.LightBulb;
 import com.flanks255.simplylight.blocks.RodLamp;
 import com.flanks255.simplylight.blocks.ThinLamp;
 import com.lucca.simplylightsmart.smart.SmartLinkSavedData;
+import com.lucca.simplylightsmart.smart.SmartSwitchBlock;
 import com.lucca.simplylightsmart.smart.SmartSwitchBlockEntity;
 import com.lucca.simplylightsmart.smart.SmartTargetAddress;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -161,9 +163,32 @@ public final class OriginalLightAdapter {
             return level.getBestNeighborSignal(pos);
         }
         SmartTargetAddress target = SmartSwitchBlockEntity.address(serverLevel, pos);
-        Optional<SmartTargetAddress> owner = SmartLinkSavedData.get(serverLevel).ownerOf(target);
-        return owner.map(switchPos -> SmartLinkSavedData.get(serverLevel).signalOf(switchPos))
+        SmartLinkSavedData links = SmartLinkSavedData.get(serverLevel);
+        Optional<SmartTargetAddress> owner = links.ownerOf(target);
+        if (owner.isPresent() && isVerifiedMissingSwitch(serverLevel, owner.get())) {
+            // A mover can discard the switch block entity before onRemove is
+            // observed. Once its loaded location proves the block is gone,
+            // self-heal the stale ownership rather than retaining its signal.
+            links.removeTarget(target);
+            owner = Optional.empty();
+        }
+        return owner.map(links::signalOf)
                 .orElseGet(() -> level.getBestNeighborSignal(pos));
+    }
+
+    /** Returns true only when the owning chunk is loaded and definitively lacks the Switch block. */
+    private static boolean isVerifiedMissingSwitch(ServerLevel sourceLevel, SmartTargetAddress owner) {
+        Optional<GlobalPos> resolvedOwner = owner.resolve(sourceLevel);
+        if (resolvedOwner.isEmpty()) {
+            return false;
+        }
+        ServerLevel ownerLevel = sourceLevel.getServer().getLevel(resolvedOwner.get().dimension());
+        if (ownerLevel == null) {
+            return false;
+        }
+        BlockPos ownerPos = resolvedOwner.get().pos();
+        LevelChunk ownerChunk = ownerLevel.getChunkSource().getChunkNow(ownerPos.getX() >> 4, ownerPos.getZ() >> 4);
+        return ownerChunk != null && !(ownerChunk.getBlockState(ownerPos).getBlock() instanceof SmartSwitchBlock);
     }
 
     /** Removes a canonical original-light target from its Switch on break. */

@@ -2,8 +2,10 @@ package com.lucca.simplylightsmart.smart;
 
 import com.lucca.simplylightsmart.SimplyLightSmart;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.nbt.CompoundTag;
@@ -125,15 +127,26 @@ public final class SmartLinkSavedData extends SavedData {
         return true;
     }
 
-    /** Removes every index entry owned by a switch, including stale entries. */
-    public void removeSwitch(SmartTargetAddress switchPos) {
-        boolean linksChanged = switchByTarget.entrySet().removeIf(entry -> entry.getValue().equals(switchPos)
-                || entry.getValue().matchesFallback(switchPos));
+    /**
+     * Removes every index entry owned by a switch, including stale entries.
+     * The returned targets let callers restore local redstone without relying
+     * on the Switch block entity still being present during removal.
+     */
+    public Set<SmartTargetAddress> removeSwitch(SmartTargetAddress switchPos) {
+        Set<SmartTargetAddress> removedTargets = new LinkedHashSet<>();
+        boolean linksChanged = switchByTarget.entrySet().removeIf(entry -> {
+            boolean ownedBySwitch = entry.getValue().equals(switchPos) || entry.getValue().matchesFallback(switchPos);
+            if (ownedBySwitch) {
+                removedTargets.add(entry.getKey());
+            }
+            return ownedBySwitch;
+        });
         boolean signalsChanged = signalBySwitch.entrySet().removeIf(entry -> entry.getKey().equals(switchPos)
                 || entry.getKey().matchesFallback(switchPos));
         if (linksChanged || signalsChanged) {
             setDirty();
         }
+        return Set.copyOf(removedTargets);
     }
 
     /** Removes a target and returns the switch that owned it, if any. */

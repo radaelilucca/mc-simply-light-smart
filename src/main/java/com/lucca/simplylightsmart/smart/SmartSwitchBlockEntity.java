@@ -102,11 +102,22 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        Set<SmartTargetAddress> previousTargets = Set.copyOf(linkedTargets);
-        SmartLinkSavedData.get(serverLevel).replaceTargets(address(serverLevel, worldPosition), previousTargets, List.of());
+        clearPersistedLinks(serverLevel, worldPosition);
         linkedTargets.clear();
         setChanged();
-        enqueueTargetRefreshes(previousTargets);
+    }
+
+    /**
+     * Removes a Switch's persisted ownership even if its block entity was
+     * already discarded by a mover or contraption. Loaded former targets are
+     * then refreshed to resume their own local redstone control.
+     */
+    public static Set<SmartTargetAddress> clearPersistedLinks(ServerLevel level, BlockPos pos) {
+        Set<SmartTargetAddress> previousTargets = SmartLinkSavedData.get(level).removeSwitch(address(level, pos));
+        for (SmartTargetAddress target : previousTargets) {
+            target.resolve(level).ifPresent(resolved -> DeferredLightWork.enqueueLinkedTargetRefresh(level, resolved));
+        }
+        return previousTargets;
     }
 
     /** Called when a linked dimmer is destroyed before the switch is unloaded. */
