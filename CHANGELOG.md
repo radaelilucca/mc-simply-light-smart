@@ -4,6 +4,18 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 ## Unreleased
 
+## [0.4.0] - 2026-08-09
+
+### Added
+
+- Added the Smart Debugger, an item that shows a light's active control and
+  brightness information in chat.
+
+### Fixed
+
+- Linked lights now return to their normal local redstone behavior when their
+  Smart Switch is removed.
+
 ## [0.3.3] - 2026-08-07
 
 ### Fixed
