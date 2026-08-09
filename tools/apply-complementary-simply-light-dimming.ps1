@@ -9,9 +9,9 @@ This patch assigns one material ID per smart_power value and scales the shader
 emission by that same value.
 
 The script is idempotent: it saves an untouched backup next to the target and
-always regenerates the patch from that copy. Euphoria Patches is deliberately
-excluded: its generated block.properties owns Simply Light's colored-light
-material IDs, and replacing those IDs breaks placed-light coloration.
+always regenerates the patch from that copy. Euphoria Patches keeps its own
+colored-light material IDs; its extracted packs are patched through a separate
+path that preserves those IDs and dims only the rendered light texture.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -32,6 +32,11 @@ $blockPropertyAnchor = 'block.10028='
 $ipbrTerrainAnchor = "    #if IPBR_EMISSIVE_MODE != 1 && !defined VOXY_PATCH`n        emission = GetCustomEmissionForIPBR(color, emission);`n    #endif"
 $terrainAnchor = "    } else if (mat == 10028) { // Modded Light Sources`n        noSmoothLighting = true; noDirectionalShading = true;`n        emission = GetLuminance(color.rgb) * 2.5;`n    }"
 $euphoriaAutomaticEmissionAnchor = '    } else if (mat > 20999 && mat < 21025){'
+$euphoriaMarkerStart = '# Simply Light - Smart! Euphoria texture dimming start'
+$euphoriaMarkerEnd = '# Simply Light - Smart! Euphoria texture dimming end'
+$euphoriaSourcePropertiesRelativePath = 'shaders\blockProperties\1.13+\block.10948-31015.properties'
+$euphoriaVoxelizationRelativePath = 'shaders\lib\voxelization\lightVoxelization.glsl'
+$euphoriaTextureMinimumPower = 2
 $euphoriaSmartLightMaterials = @(
     @{ Color = ''; MaterialId = 21100 }, @{ Color = 'brown'; MaterialId = 21102 },
     @{ Color = 'red'; MaterialId = 21104 }, @{ Color = 'orange'; MaterialId = 21106 },
@@ -42,6 +47,17 @@ $euphoriaSmartLightMaterials = @(
     @{ Color = 'pink'; MaterialId = 21124 }, @{ Color = 'gray'; MaterialId = 21100 },
     @{ Color = 'light_gray'; MaterialId = 21100 }, @{ Color = 'black'; MaterialId = 21100 }
 )
+
+function Test-IsEuphoriaPatches {
+    param(
+        [string]$BlockProperties,
+        [string]$TerrainMaterials
+    )
+
+    return $BlockProperties.Contains('This block.properties file is exclusive to Euphoria Patches') -or
+        $TerrainMaterials.Contains($euphoriaAutomaticEmissionAnchor) -or
+        $TerrainMaterials.Contains('Simply Light - Smart! texture dimming')
+}
 
 function Get-SimplyLightBlockIds {
     $colors = @(
@@ -110,16 +126,58 @@ function Get-SimplyLightBlockIdsForColor {
 
 function New-EuphoriaBlockPropertiesSection {
     $lines = [System.Collections.Generic.List[string]]::new()
-    $lines.Add($markerStart)
-    $lines.Add("# Keeps Euphoria's colored-light material categories while dimming only the visible texture.")
+    $lines.Add($euphoriaMarkerStart)
+    $lines.Add("# Preserves Euphoria's original colored-light IDs at full brightness.")
+    $lines.Add("# Dimmed Simply Light blocks use matching dynamic IDs, then darken only their texture.")
     foreach ($entry in $euphoriaSmartLightMaterials | Where-Object { $_.Color -ne '' -and $_.Color -ne 'gray' -and $_.Color -ne 'light_gray' -and $_.Color -ne 'black' }) {
-        $blocks = Get-SimplyLightBlockIdsForColor -Color $entry.Color
+        $blocks = Get-EuphoriaDimmedLightSelectors -Colors @($entry.Color)
         $lines.Add("block.$($entry.MaterialId)=$($blocks -join ' ')")
     }
-    $whiteBlocks = @('', 'gray', 'light_gray', 'black') | ForEach-Object { Get-SimplyLightBlockIdsForColor -Color $_ }
+    $whiteBlocks = Get-EuphoriaDimmedLightSelectors -Colors @('', 'gray', 'light_gray', 'black')
     $lines.Add("block.21100=$($whiteBlocks -join ' ')")
-    $lines.Add($markerEnd)
+    $lines.Add($euphoriaMarkerEnd)
     return $lines -join "`n"
+}
+
+function Get-EuphoriaDimmedLightSelectors {
+    param([string[]]$Colors)
+
+    $families = @('lightbulb', 'illuminant_slab', 'illuminant_panel', 'wall_lamp', 'rodlamp', 'edge_light', 'edge_light_top')
+    $selectors = [System.Collections.Generic.List[string]]::new()
+    foreach ($color in $Colors) {
+        $suffix = if ($color) { "_$color" } else { '' }
+        foreach ($family in $families) {
+            foreach ($power in 0..14) {
+                $selectors.Add("simplylight:$family$suffix`:smart_power=$power")
+            }
+        }
+        foreach ($power in 0..14) {
+            $selectors.Add("simplylight:lamp_post$suffix`:position=top:smart_power=$power")
+        }
+        $illuminant = if ($color) { "illuminant_${color}_block" } else { 'illuminant_block' }
+        foreach ($blockId in @($illuminant, "${illuminant}_on")) {
+            foreach ($power in 0..14) {
+                $selectors.Add("simplylight:$blockId`:on=true:smart_power=$power")
+            }
+        }
+    }
+    return $selectors
+}
+
+function New-EuphoriaBlockPropertiesContent {
+    param([string]$BlockProperties)
+
+    $restrictedProfiles = $BlockProperties -replace "`r`n", "`n"
+    $matches = [regex]::Matches($restrictedProfiles, '(?<!\S)(simplylight:[^\s\\]+)')
+    for ($index = $matches.Count - 1; $index -ge 0; $index--) {
+        $match = $matches[$index]
+        $selector = $match.Groups[1].Value
+        if (-not $selector.Contains(':smart_power=')) {
+            $restrictedProfiles = $restrictedProfiles.Remove($match.Index, $match.Length).Insert(
+                $match.Index, "${selector}:smart_power=15")
+        }
+    }
+    return $restrictedProfiles.TrimEnd() + "`n`n" + (New-EuphoriaBlockPropertiesSection) + "`n"
 }
 
 function New-EuphoriaPhotonicsLights {
@@ -160,10 +218,20 @@ function New-IpbrEmissionSection {
 
 function New-EuphoriaTerrainMaterialSection {
     return @"
-    } else if (mat >= 21100 && mat <= 21124) { // Simply Light - Smart! texture dimming
+    } else if ((mat > 20999 && mat < 21025) || (mat > 21099 && mat < 21125)) {
         emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);
-        float simplyLightSmartTexturePower = max(float(blockLightEmission) / 15.0, 2.0 / 15.0);
-        color.rgb *= simplyLightSmartTexturePower;
+        if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming
+            float simplyLightSmartTexturePower = max(float(blockLightEmission), $euphoriaTextureMinimumPower.0) / 15.0;
+            color.rgb *= simplyLightSmartTexturePower;
+        }
+    }
+"@.TrimEnd("`r", "`n")
+}
+
+function Get-EuphoriaTerrainMaterialAnchor {
+    return @"
+    } else if (mat > 20999 && mat < 21025){
+        emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);
     }
 "@.TrimEnd("`r", "`n")
 }
@@ -183,16 +251,45 @@ function Get-EuphoriaIpbrEmissionAnchor {
 
 function New-EuphoriaIpbrSection {
     return @"
- else if (mat >= 21100 && mat <= 21124) { // Simply Light - Smart! texture dimming
+    } else if ((mat > 20999 && mat < 21025) || (mat > 21099 && mat < 21125)) {
     #ifdef GBUFFERS_TERRAIN
         emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);
-        float simplyLightSmartTexturePower = max(float(blockLightEmission) / 15.0, 2.0 / 15.0);
-        color.rgb *= simplyLightSmartTexturePower;
+        if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming
+            float simplyLightSmartTexturePower = max(float(blockLightEmission), $euphoriaTextureMinimumPower.0) / 15.0;
+            color.rgb *= simplyLightSmartTexturePower;
+        }
     #else
         bool doesNothing;
         emission = DoAutomaticEmission(noSmoothLighting, doesNothing, color.rgb, 0.0, 15, 1.0);
     #endif
 }
+"@.TrimEnd("`r", "`n")
+}
+
+function Get-EuphoriaVoxelizationAnchor {
+    return @"
+                                if (mat == 21024) return  80; // Pink Modded Blocks
+                                if (mat == 30008) return 254; // Tinted Glass
+"@.TrimEnd("`r", "`n")
+}
+
+function New-EuphoriaVoxelizationSection {
+    return @"
+                                if (mat == 21024) return  80; // Pink Modded Blocks
+                                if (mat == 21100) return  97; // White Simply Light - Smart! Blocks
+                                if (mat == 21102) return  43; // Brown Simply Light - Smart! Blocks
+                                if (mat == 21104) return  70; // Red Simply Light - Smart! Blocks
+                                if (mat == 21106) return  71; // Orange Simply Light - Smart! Blocks
+                                if (mat == 21108) return  72; // Yellow Simply Light - Smart! Blocks
+                                if (mat == 21110) return  73; // Lime Simply Light - Smart! Blocks
+                                if (mat == 21112) return  74; // Green Simply Light - Smart! Blocks
+                                if (mat == 21114) return  75; // Cyan Simply Light - Smart! Blocks
+                                if (mat == 21116) return  76; // Light Blue Simply Light - Smart! Blocks
+                                if (mat == 21118) return  77; // Blue Simply Light - Smart! Blocks
+                                if (mat == 21120) return  78; // Purple Simply Light - Smart! Blocks
+                                if (mat == 21122) return  79; // Magenta Simply Light - Smart! Blocks
+                                if (mat == 21124) return  80; // Pink Simply Light - Smart! Blocks
+                                if (mat == 30008) return 254; // Tinted Glass
 "@.TrimEnd("`r", "`n")
 }
 
@@ -299,7 +396,7 @@ function New-PatchedShaderContents {
         throw "Material IDs $materialIdStart through $materialIdEnd are already used in $SourceDescription. Choose a new range before patching this shader version."
     }
 
-    if ($TerrainMaterials.Contains($euphoriaAutomaticEmissionAnchor)) {
+    if (Test-IsEuphoriaPatches -BlockProperties $BlockProperties -TerrainMaterials $TerrainMaterials) {
         throw "Euphoria Patches is not supported by this dimming patcher. Its block.properties must retain Euphoria's Simply Light colored-light IDs."
     }
     $patchedBlockProperties = Add-AfterUniqueAnchor -Content $BlockProperties -Anchor $blockPropertyAnchor -Addition $blockSection -FileDescription $SourceDescription
@@ -403,8 +500,10 @@ function Restore-SimplyLightSmartPatch {
 
     $relativePaths = @(
         'shaders\block.properties',
+        $euphoriaSourcePropertiesRelativePath,
         'shaders\lib\materials\materialHandling\terrainMaterials.glsl',
         'shaders\lib\materials\materialHandling\terrainIPBR.glsl',
+        $euphoriaVoxelizationRelativePath,
         'shaders\ph_lights.json'
     )
     $restorablePaths = @($relativePaths | ForEach-Object {
@@ -423,6 +522,69 @@ function Restore-SimplyLightSmartPatch {
         }
     }
     Write-Host "Restored $($restorablePaths.Count) shader file(s) in $resolvedPackPath from their Simply Light - Smart! backups."
+}
+
+function Apply-EuphoriaSmartDimming {
+    param([string]$PackPath)
+
+    $blockPropertiesPath = Join-Path $PackPath 'shaders\block.properties'
+    $sourcePropertiesPath = Join-Path $PackPath $euphoriaSourcePropertiesRelativePath
+    $terrainMaterialsPath = Join-Path $PackPath 'shaders\lib\materials\materialHandling\terrainMaterials.glsl'
+    $terrainIpbrPath = Join-Path $PackPath 'shaders\lib\materials\materialHandling\terrainIPBR.glsl'
+    $voxelizationPath = Join-Path $PackPath $euphoriaVoxelizationRelativePath
+    $photonicsLightsPath = Join-Path $PackPath 'shaders\ph_lights.json'
+    $requiredPaths = @(
+        $blockPropertiesPath,
+        $sourcePropertiesPath,
+        $terrainMaterialsPath,
+        $terrainIpbrPath,
+        $voxelizationPath,
+        $photonicsLightsPath
+    )
+    foreach ($path in $requiredPaths) {
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            throw "Euphoria shader file not found: $path"
+        }
+    }
+
+    $blockProperties = Get-PristineContent -Path $blockPropertiesPath
+    $sourceProperties = Get-PristineContent -Path $sourcePropertiesPath
+    $terrainMaterials = Get-PristineContent -Path $terrainMaterialsPath
+    $terrainIpbr = Get-PristineContent -Path $terrainIpbrPath
+    $voxelization = Get-PristineContent -Path $voxelizationPath
+    $photonicsLights = Get-PristineContent -Path $photonicsLightsPath
+
+    $patchedBlockProperties = New-EuphoriaBlockPropertiesContent -BlockProperties $blockProperties
+    $patchedSourceProperties = New-EuphoriaBlockPropertiesContent -BlockProperties $sourceProperties
+    $patchedTerrainMaterials = Replace-UniqueAnchor `
+        -Content $terrainMaterials `
+        -Anchor (Get-EuphoriaTerrainMaterialAnchor) `
+        -Replacement (New-EuphoriaTerrainMaterialSection) `
+        -FileDescription $terrainMaterialsPath
+    $patchedTerrainIpbr = Replace-UniqueAnchor `
+        -Content $terrainIpbr `
+        -Anchor (Get-EuphoriaIpbrEmissionAnchor) `
+        -Replacement (New-EuphoriaIpbrSection) `
+        -FileDescription $terrainIpbrPath
+    $patchedVoxelization = Replace-UniqueAnchor `
+        -Content $voxelization `
+        -Anchor (Get-EuphoriaVoxelizationAnchor) `
+        -Replacement (New-EuphoriaVoxelizationSection) `
+        -FileDescription $voxelizationPath
+    $patchedPhotonicsLights = New-EuphoriaPhotonicsLights `
+        -PhotonicsLights $photonicsLights `
+        -SourceDescription $photonicsLightsPath
+
+    if ($PSCmdlet.ShouldProcess($PackPath, 'apply Simply Light - Smart! Euphoria texture-dimming patch')) {
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::WriteAllText($blockPropertiesPath, $patchedBlockProperties, $utf8NoBom)
+        [System.IO.File]::WriteAllText($sourcePropertiesPath, $patchedSourceProperties, $utf8NoBom)
+        [System.IO.File]::WriteAllText($terrainMaterialsPath, $patchedTerrainMaterials, $utf8NoBom)
+        [System.IO.File]::WriteAllText($terrainIpbrPath, $patchedTerrainIpbr, $utf8NoBom)
+        [System.IO.File]::WriteAllText($voxelizationPath, $patchedVoxelization, $utf8NoBom)
+        [System.IO.File]::WriteAllText($photonicsLightsPath, $patchedPhotonicsLights, $utf8NoBom)
+        Write-Host "Patched $PackPath while preserving Euphoria's colored-light material IDs."
+    }
 }
 
 function Apply-SimplyLightSmartPatch {
@@ -446,8 +608,8 @@ function Apply-SimplyLightSmartPatch {
         $blockProperties = Read-ZipTextEntry -ZipPath $sourceZipPath -EntryName 'shaders/block.properties'
         $terrainMaterials = Read-ZipTextEntry -ZipPath $sourceZipPath -EntryName 'shaders/lib/materials/materialHandling/terrainMaterials.glsl'
         $terrainIpbr = Read-ZipTextEntry -ZipPath $sourceZipPath -EntryName 'shaders/lib/materials/materialHandling/terrainIPBR.glsl'
-        if ($terrainMaterials.Contains($euphoriaAutomaticEmissionAnchor)) {
-            throw "Euphoria Patches is not supported by this dimming patcher. Its block.properties must retain Euphoria's Simply Light colored-light IDs. Use -Restore to undo an earlier patch."
+        if (Test-IsEuphoriaPatches -BlockProperties $blockProperties -TerrainMaterials $terrainMaterials) {
+            throw "Euphoria Patches must be extracted before patching so its generated properties and colored-light tables can be updated together."
         }
         $photonicsLights = $null
         $contents = New-PatchedShaderContents `
@@ -476,9 +638,11 @@ function Apply-SimplyLightSmartPatch {
         }
     }
 
+    $sourceBlockProperties = [System.IO.File]::ReadAllText($blockPropertiesPath) -replace "`r`n", "`n"
     $sourceTerrainMaterials = [System.IO.File]::ReadAllText($terrainMaterialsPath) -replace "`r`n", "`n"
-    if ($sourceTerrainMaterials.Contains($euphoriaAutomaticEmissionAnchor)) {
-        throw "Euphoria Patches is not supported by this dimming patcher. Its block.properties must retain Euphoria's Simply Light colored-light IDs. Use -Restore to undo an earlier patch."
+    if (Test-IsEuphoriaPatches -BlockProperties $sourceBlockProperties -TerrainMaterials $sourceTerrainMaterials) {
+        Apply-EuphoriaSmartDimming -PackPath $resolvedPackPath
+        return
     }
     $blockProperties = Get-PristineContent -Path $blockPropertiesPath
     $terrainMaterials = Get-PristineContent -Path $terrainMaterialsPath
