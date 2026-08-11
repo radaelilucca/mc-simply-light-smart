@@ -27,5 +27,7 @@
   "message.simply_light_smart.debugger.switch.header": "[Smart Debugger] Smart Switch at %s",
   "message.simply_light_smart.debugger.switch.state": "  Signal: %s | linked targets: %s",
   "message.simply_light_smart.debugger.switch.missing": "[Smart Debugger] The Smart Switch block entity is missing at %s.",
+  "message.simply_light_smart.shader.created": "[Simply Light - Smart!] Created patched shader pack: %s",
+  "message.simply_light_smart.shader.failed": "[Simply Light - Smart!] Could not patch %s: %s",
   "itemGroup.simply_light_smart.main": "Simply Light - Smart!"
 }

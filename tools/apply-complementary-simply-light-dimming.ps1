@@ -198,9 +198,10 @@ function New-TerrainMaterialSection {
     return @"
     else if (mat >= $materialIdStart && mat <= $materialIdEnd) { // Simply Light - Smart! dynamic emission
         noSmoothLighting = true; noDirectionalShading = true;
-        float simplyLightSmartPower = float(mat - $materialIdStart) / 15.0;
-        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartPower;
-        color.rgb *= simplyLightSmartPower;
+        float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(mat - $materialIdStart) / 15.0);
+        float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);
+        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartEmissionPower;
+        color.rgb *= simplyLightSmartTexturePower;
     }
 "@.TrimEnd("`r", "`n")
 }
@@ -209,9 +210,10 @@ function New-IpbrEmissionSection {
     $materialIdEnd = $materialIdStart + 15
     return @"
     if (mat >= $materialIdStart && mat <= $materialIdEnd) { // Simply Light - Smart! dynamic emission
-        float simplyLightSmartPower = float(mat - $materialIdStart) / 15.0;
-        color.rgb *= simplyLightSmartPower;
-        emission *= simplyLightSmartPower;
+        float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(mat - $materialIdStart) / 15.0);
+        float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);
+        color.rgb *= simplyLightSmartTexturePower;
+        emission *= simplyLightSmartEmissionPower;
     }
 "@.TrimEnd("`r", "`n")
 }
@@ -221,7 +223,8 @@ function New-EuphoriaTerrainMaterialSection {
     } else if ((mat > 20999 && mat < 21025) || (mat > 21099 && mat < 21125)) {
         emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);
         if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming
-            float simplyLightSmartTexturePower = max(float(blockLightEmission), $euphoriaTextureMinimumPower.0) / 15.0;
+            float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(blockLightEmission) / 15.0);
+            float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);
             color.rgb *= simplyLightSmartTexturePower;
         }
     }
@@ -255,7 +258,8 @@ function New-EuphoriaIpbrSection {
     #ifdef GBUFFERS_TERRAIN
         emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);
         if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming
-            float simplyLightSmartTexturePower = max(float(blockLightEmission), $euphoriaTextureMinimumPower.0) / 15.0;
+            float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(blockLightEmission) / 15.0);
+            float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);
             color.rgb *= simplyLightSmartTexturePower;
         }
     #else
@@ -331,12 +335,33 @@ function Replace-UniqueAnchor {
         [string]$FileDescription
     )
 
+    $firstIndex = $Content.IndexOf($Anchor, [System.StringComparison]::Ordinal)
+    if ($firstIndex -ge 0 -and $firstIndex -eq $Content.LastIndexOf($Anchor, [System.StringComparison]::Ordinal)) {
+        return $Content.Remove($firstIndex, $Anchor.Length).Insert($firstIndex, $Replacement)
+    }
+
     $matches = [regex]::Matches($Content, [regex]::Escape($Anchor))
+    if ($matches.Count -ne 1 -and $FileDescription.EndsWith('terrainMaterials.glsl') -and $Anchor.Contains('mat > 20999 && mat < 21025')) {
+        # Euphoria occasionally changes insignificant whitespace in this block.
+        # Keep the patch version-safe while accepting that formatting-only variation.
+        $euphoriaEmissionPattern = '(?m)^[\t ]*\}[\t ]*else\s+if\s*\(\s*mat\s*>\s*20999\s*&&\s*mat\s*<\s*21025\s*\)\s*\{[\t ]*\r?\n[\t ]*emission\s*=\s*DoAutomaticEmission\s*\(\s*noSmoothLighting\s*,\s*noDirectionalShading\s*,\s*color\.rgb\s*,\s*lmCoord\.x\s*,\s*blockLightEmission\s*,\s*1\.0\s*\)\s*;[\t ]*\r?\n[\t ]*\}'
+        $matches = [regex]::Matches($Content, $euphoriaEmissionPattern)
+    }
+    if ($matches.Count -ne 1 -and $FileDescription.EndsWith('terrainIPBR.glsl') -and $Anchor.Contains('GBUFFERS_TERRAIN')) {
+        # The Euphoria source has used both compact and indented versions of this conditional.
+        $euphoriaIpbrPattern = '(?m)^[\t ]*\}[\t ]*else\s+if\s*\(\s*mat\s*>\s*20999\s*&&\s*mat\s*<\s*21025\s*\)\s*\{[\t ]*\r?\n[\t ]*#ifdef\s+GBUFFERS_TERRAIN[\t ]*\r?\n[\t ]*emission\s*=\s*DoAutomaticEmission\s*\(\s*noSmoothLighting\s*,\s*noDirectionalShading\s*,\s*color\.rgb\s*,\s*lmCoord\.x\s*,\s*blockLightEmission\s*,\s*1\.0\s*\)\s*;[\t ]*\r?\n[\t ]*#else[\t ]*\r?\n[\t ]*bool\s+doesNothing\s*;[\t ]*\r?\n[\t ]*emission\s*=\s*DoAutomaticEmission\s*\(\s*noSmoothLighting\s*,\s*doesNothing\s*,\s*color\.rgb\s*,\s*0\.0\s*,\s*15\s*,\s*1\.0\s*\)\s*;[\t ]*\r?\n[\t ]*#endif[\t ]*\r?\n[\t ]*\}'
+        $matches = [regex]::Matches($Content, $euphoriaIpbrPattern)
+    }
+    if ($matches.Count -ne 1 -and $FileDescription.EndsWith('lightVoxelization.glsl') -and $Anchor.Contains('mat == 21024')) {
+        # Keep this mapping resilient to spacing changes while still requiring Euphoria's two sentinel materials.
+        $euphoriaVoxelizationPattern = '(?m)^[\t ]*if\s*\(\s*mat\s*==\s*21024\s*\)\s*return\s*80\s*;[^\r\n]*\r?\n[\t ]*if\s*\(\s*mat\s*==\s*30008\s*\)\s*return\s*254\s*;[^\r\n]*'
+        $matches = [regex]::Matches($Content, $euphoriaVoxelizationPattern)
+    }
     if ($matches.Count -ne 1) {
         throw "Expected exactly one '$Anchor' anchor in $FileDescription, found $($matches.Count)."
     }
 
-    return $Content.Remove($matches[0].Index, $Anchor.Length).Insert($matches[0].Index, $Replacement)
+    return $Content.Remove($matches[0].Index, $matches[0].Length).Insert($matches[0].Index, $Replacement)
 }
 
 function Remove-SimplyLightProfiles {
@@ -358,11 +383,23 @@ function Upgrade-ExistingShaderPatch {
         throw "Existing Simply Light - Smart! patch in $SourceDescription is incomplete and cannot be upgraded safely."
     }
 
-    $oldTerrainRule = "float simplyLightSmartPower = float(mat - $materialIdStart) / 15.0;`n        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartPower;"
-    $newTerrainRule = "$oldTerrainRule`n        color.rgb *= simplyLightSmartPower;"
-    $oldIpbrRule = "emission *= float(mat - $materialIdStart) / 15.0;"
-    $newIpbrRule = "float simplyLightSmartPower = float(mat - $materialIdStart) / 15.0;`n        color.rgb *= simplyLightSmartPower;`n        emission *= simplyLightSmartPower;"
-    $upgradedTerrainMaterials = $TerrainMaterials.Replace($oldTerrainRule, $newTerrainRule).Replace($oldIpbrRule, $newIpbrRule)
+    $oldTerrainRules = @(
+        "float simplyLightSmartPower = float(mat - $materialIdStart) / 15.0;`n        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartPower;`n        color.rgb *= simplyLightSmartPower;",
+        "float simplyLightSmartPower = float(mat - $materialIdStart) / 15.0;`n        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartPower;"
+    )
+    $newTerrainRule = "float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(mat - $materialIdStart) / 15.0);`n        float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);`n        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartEmissionPower;`n        color.rgb *= simplyLightSmartTexturePower;"
+    $oldIpbrRules = @(
+        "float simplyLightSmartPower = float(mat - $materialIdStart) / 15.0;`n        color.rgb *= simplyLightSmartPower;`n        emission *= simplyLightSmartPower;",
+        "emission *= float(mat - $materialIdStart) / 15.0;"
+    )
+    $newIpbrRule = "float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(mat - $materialIdStart) / 15.0);`n        float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);`n        color.rgb *= simplyLightSmartTexturePower;`n        emission *= simplyLightSmartEmissionPower;"
+    $upgradedTerrainMaterials = $TerrainMaterials
+    foreach ($oldTerrainRule in $oldTerrainRules) {
+        $upgradedTerrainMaterials = $upgradedTerrainMaterials.Replace($oldTerrainRule, $newTerrainRule)
+    }
+    foreach ($oldIpbrRule in $oldIpbrRules) {
+        $upgradedTerrainMaterials = $upgradedTerrainMaterials.Replace($oldIpbrRule, $newIpbrRule)
+    }
 
     return [PSCustomObject]@{
         BlockProperties = $BlockProperties
