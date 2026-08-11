@@ -28,6 +28,6 @@
   "message.simply_light_smart.debugger.switch.state": "  Sinal: %s | alvos vinculados: %s",
   "message.simply_light_smart.debugger.switch.missing": "[Depurador Inteligente] A block entity do Interruptor Inteligente esta ausente em %s.",
   "itemGroup.simply_light_smart.main": "Simply Light - Smart!",
-  "message.simply_light_smart.shader.created": "[Simply Light - Smart!] Pacote de shader patcheado criado: %s",
-  "message.simply_light_smart.shader.failed": "[Simply Light - Smart!] Não foi possível patchear %s: %s"
+  "message.simply_light_smart.shader.created": "%s Pacote de shader patcheado criado: %s",
+  "message.simply_light_smart.shader.failed": "%s Não foi possível patchear %s: %s"
 }
