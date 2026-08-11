@@ -2,6 +2,19 @@
 
 All notable changes to Simply Light - Smart! are documented in this file.
 
+## [0.5.0] - 2026-08-11
+
+### Added
+
+- Added initial shader support for compatible Complementary packs, including
+  Euphoria Patches. The client creates a Simply Light - Smart! version that
+  can be selected from the shader menu.
+
+### Changed
+
+- Light textures now dim with their redstone-controlled brightness while
+  preserving colored lighting in supported shader packs.
+
 ## [0.4.0] - 2026-08-10
 
 ### Added
