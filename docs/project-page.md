@@ -64,15 +64,26 @@ an amethyst shard.
 
 ## Shader support
 
-Shader support is being implemented. The initial plan is to support:
+Simply Light - Smart! has initial support for compatible Complementary shader
+packs:
 
-- BSL Shaders
-- Complementary Shaders - Reimagined
-- Complementary Shaders - Unbound
+- Complementary Reimagined
+- Complementary Unbound
+- Complementary packs enhanced with Euphoria Patches
+
+When the game starts, the addon looks for these packs in your `shaderpacks`
+folder and creates a Simply Light - Smart! version beside the original. Your
+original pack is left untouched.
+
+Open the shader menu and select the generated Simply Light - Smart! version.
+The addon never changes your active shader automatically. In the generated
+pack, a light's visible glow fades with its redstone-controlled brightness,
+while Euphoria's colored lighting remains available.
+
+This is initial shader support: other shader packs, including BSL, are not yet
+prepared automatically.
 
 <img src="https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20shader.gif?raw=true" alt="Simply Light blocks with shader support" width="240">
-
-Original integrations of Simply Light with shaders should work just fine.
 
 ## Compatibility
 
@@ -81,6 +92,8 @@ Original integrations of Simply Light with shaders should work just fine.
 - [Simply Light 1.5.3+1.21.1-b4](https://www.curseforge.com/minecraft/mc-mods/simply-light)
 - Optional [Sable](https://github.com/ryanhcode/sable) 2.0.3 support for
   sublevel-aware linking
+- Shader support tested with Complementary Reimagined r5.8.1 and Complementary
+  Unbound r5.8.1, with or without Euphoria Patches 1.9.3
 
 The addon does not require Create or Sable to run.
 

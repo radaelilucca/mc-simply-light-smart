@@ -9,6 +9,7 @@ import com.lucca.simplylightsmart.registry.ModItems;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 
 /** Main entry point for Simply Light - Smart!. */
@@ -16,6 +17,12 @@ import org.slf4j.Logger;
 public final class SimplyLightSmart {
     public static final String MOD_ID = "simply_light_smart";
     public static final Logger LOGGER = LogUtils.getLogger();
+
+    public static String version() {
+        return ModList.get().getModContainerById(MOD_ID)
+                .map(container -> container.getModInfo().getVersion().toString())
+                .orElse("unknown");
+    }
 
     public SimplyLightSmart(IEventBus modEventBus) {
         ModAttachments.register(modEventBus);
