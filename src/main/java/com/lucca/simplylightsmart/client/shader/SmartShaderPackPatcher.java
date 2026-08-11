@@ -35,7 +35,7 @@ import java.util.zip.ZipFile;
  */
 final class SmartShaderPackPatcher {
     private static final String PATCH_LABEL = "Simply Light Smart";
-    private static final String PATCH_FORMAT = "4";
+    private static final String PATCH_FORMAT = "9";
     private static final String MANIFEST_FILE = ".simply-light-smart-patch.properties";
     private static final String TEMP_SUFFIX = ".simply-light-smart.tmp";
     private static final String BLOCK_PROPERTIES = "shaders/block.properties";
@@ -49,7 +49,9 @@ final class SmartShaderPackPatcher {
     private static final String STOCK_MARKER = "# Simply Light - Smart! dynamic emission start";
     private static final String EUPHORIA_MARKER = "# Simply Light - Smart! Euphoria texture dimming start";
     private static final int STOCK_MATERIAL_START = 12000;
-    private static final int EUPHORIA_TEXTURE_MINIMUM_POWER = 2;
+    private static final int EUPHORIA_DYNAMIC_MAX_POWER = 11;
+    private static final int EUPHORIA_NATIVE_MIN_POWER = EUPHORIA_DYNAMIC_MAX_POWER + 1;
+    private static final int TEXTURE_MINIMUM_POWER = 2;
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(runnable -> {
         Thread thread = new Thread(runnable, "SimplyLightSmart-ShaderPatcher");
         thread.setDaemon(true);
@@ -103,6 +105,7 @@ final class SmartShaderPackPatcher {
             }
             String fingerprint = fingerprint(source, kind);
             if (isCurrentOutput(target, sourceName, fingerprint, kind)) {
+                removeStaleOutputs(shaderpacks, target, sourceName, kind);
                 return;
             }
 
@@ -116,6 +119,7 @@ final class SmartShaderPackPatcher {
             applyPatch(temporary, kind);
             writeManifest(temporary, sourceName, fingerprint, kind);
             replaceGeneratedOutput(temporary, target, shaderpacks);
+            removeStaleOutputs(shaderpacks, target, sourceName, kind);
             SmartShaderPatchNotifications.created(targetName);
             SimplyLightSmart.LOGGER.info("Created patched shader pack {} from {}", targetName, sourceName);
         } catch (Exception exception) {
@@ -154,6 +158,37 @@ final class SmartShaderPackPatcher {
                 && sourceName.equals(manifest.get("sourceName"))
                 && fingerprint.equals(manifest.get("sourceFingerprint"))
                 && kind.name().equals(manifest.get("sourceKind"));
+    }
+
+    /** Removes only older managed outputs derived from the same source shader pack. */
+    private static void removeStaleOutputs(Path shaderpacks, Path currentTarget, String sourceName, SourceKind kind) {
+        String managedPrefix = withoutZipExtension(sourceName) + " + " + PATCH_LABEL + "_";
+        try (var entries = Files.list(shaderpacks)) {
+            List<Path> candidates = entries
+                    .filter(Files::isDirectory)
+                    .filter(path -> !path.equals(currentTarget))
+                    .filter(path -> path.getFileName().toString().startsWith(managedPrefix))
+                    .toList();
+            for (Path candidate : candidates) {
+                if (!isStaleOutput(candidate, sourceName, kind)) {
+                    continue;
+                }
+                deleteManagedDirectory(candidate, shaderpacks);
+                SimplyLightSmart.LOGGER.info("Removed outdated patched shader pack {}", candidate.getFileName());
+            }
+        } catch (IOException exception) {
+            SimplyLightSmart.LOGGER.warn("Could not remove outdated Simply Light - Smart! shader packs for {}", sourceName, exception);
+        }
+    }
+
+    private static boolean isStaleOutput(Path candidate, String sourceName, SourceKind kind) throws IOException {
+        if (!isManagedOutput(candidate)) {
+            return false;
+        }
+        Map<String, String> manifest = readManifest(candidate);
+        return sourceName.equals(manifest.get("sourceName"))
+                && kind.name().equals(manifest.get("sourceKind"))
+                && !SimplyLightSmart.version().equals(manifest.get("addonVersion"));
     }
 
     private static boolean isManagedOutput(Path path) throws IOException {
@@ -403,10 +438,10 @@ final class SmartShaderPackPatcher {
     private static String stockTerrainSection() {
         return "    else if (mat >= 12000 && mat <= 12015) { // Simply Light - Smart! dynamic emission\n"
                 + "        noSmoothLighting = true; noDirectionalShading = true;\n"
-                + "        float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(mat - 12000) / 15.0);\n"
-                + "        float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);\n"
-                + "        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartEmissionPower;\n"
-                + "        color.rgb *= simplyLightSmartTexturePower;\n"
+                + visualDimmingVariables("        ", "mat - 12000")
+                + applyVisualLightmapDimmingCode("        ", "mat - 12000")
+                + "        emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartVisualEmissionPower;\n"
+                + applyTextureDimmingCode("        ")
                 + "    }";
     }
 
@@ -419,12 +454,50 @@ final class SmartShaderPackPatcher {
         return "if (mat >= 10000) {\n"
                 + "if (mat >= 12000 && mat <= 12015) { // Simply Light - Smart! dynamic emission\n"
                 + "    noSmoothLighting = true; noDirectionalShading = true;\n"
-                + "    float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(mat - 12000) / 15.0);\n"
-                + "    float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, 2.0 / 15.0);\n"
-                + "    emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartEmissionPower;\n"
-                + "    color.rgb *= simplyLightSmartTexturePower;\n"
+                + visualDimmingVariables("    ", "mat - 12000")
+                + applyVisualLightmapDimmingCode("    ", "mat - 12000")
+                + "    emission = GetLuminance(color.rgb) * 2.5 * simplyLightSmartVisualEmissionPower;\n"
+                + applyTextureDimmingCode("    ")
                 + "}\n"
                 + "else if (mat < 11024) {";
+    }
+
+    /**
+     * Keeps the first three redstone steps at full visual brightness, then transitions
+     * through steps four and five before dimming bright texels normally. The real
+     * block-light level is intentionally untouched.
+     */
+    private static String visualDimmingVariables(String indentation, String lightLevelExpression) {
+        String continuation = indentation + "    ";
+        return indentation + "float simplyLightSmartDimming = 15.0 - float(" + lightLevelExpression + ");\n"
+                + indentation + "float simplyLightSmartCompressedDimming = simplyLightSmartDimming <= 3.0\n"
+                + continuation + "? 0.0\n"
+                + continuation + ": simplyLightSmartDimming <= 5.0\n"
+                + continuation + "? (simplyLightSmartDimming - 3.0) * 0.5\n"
+                + continuation + ": 1.0 + (simplyLightSmartDimming - 5.0) * 1.4;\n"
+                + indentation + "float simplyLightSmartTextureBrightness = clamp(1.0 - simplyLightSmartCompressedDimming / 15.0, 0.0, 1.0);\n"
+                + indentation + "float simplyLightSmartVisualEmissionPower = smoothstep(0.0, 1.0, simplyLightSmartTextureBrightness);\n"
+                + indentation + "float simplyLightSmartTexturePower = max(simplyLightSmartVisualEmissionPower, "
+                + TEXTURE_MINIMUM_POWER + ".0 / 15.0);\n"
+                + indentation + "float simplyLightSmartColorPeak = max(color.r, max(color.g, color.b));\n"
+                + indentation + "float simplyLightSmartTextureMask = smoothstep(0.55, 0.90, simplyLightSmartColorPeak);\n";
+    }
+
+    private static String applyTextureDimmingCode(String indentation) {
+        return indentation + "color.rgb *= mix(1.0, simplyLightSmartTexturePower, simplyLightSmartTextureMask);\n";
+    }
+
+    /**
+     * Remaps only this material's lighting input to the visual dimming curve. This keeps
+     * the bright bloom during the first three redstone steps without changing emitted
+     * block light, colored-light voxelization, or the world lightmap for other blocks.
+     */
+    private static String applyVisualLightmapDimmingCode(String indentation, String lightLevelExpression) {
+        return indentation + "float simplyLightSmartActualLightLevel = float(" + lightLevelExpression + ") / 15.0;\n"
+                + indentation + "if (simplyLightSmartActualLightLevel > 0.0) {\n"
+                + indentation + "    float simplyLightSmartLightmapScale = simplyLightSmartTextureBrightness / simplyLightSmartActualLightLevel;\n"
+                + indentation + "    lmCoordM.x = clamp(lmCoordM.x * simplyLightSmartLightmapScale, 0.0, 1.0);\n"
+                + indentation + "}\n";
     }
 
     private static String euphoriaPropertyContent(String content) {
@@ -443,9 +516,15 @@ final class SmartShaderPackPatcher {
             }
             result.append(content, index, start);
             String selector = content.substring(start, end);
-            result.append(selector);
             if (tokenBoundary && !selector.contains(":smart_power=")) {
-                result.append(":smart_power=15");
+                for (int power = EUPHORIA_NATIVE_MIN_POWER; power <= 15; power++) {
+                    if (power > EUPHORIA_NATIVE_MIN_POWER) {
+                        result.append(' ');
+                    }
+                    result.append(selector).append(":smart_power=").append(power);
+                }
+            } else {
+                result.append(selector);
             }
             index = end;
         }
@@ -455,7 +534,7 @@ final class SmartShaderPackPatcher {
     private static String euphoriaPropertySection() {
         List<String> lines = new ArrayList<>();
         lines.add(EUPHORIA_MARKER);
-        lines.add("# Keeps Euphoria's colored-light materials while darkening only dimmed light textures.");
+        lines.add("# Keeps Euphoria's native bright material through smart_power 12-15; dims below that.");
         for (EuphoriaColor color : EuphoriaColor.values()) {
             if (color.combinedWhite) {
                 continue;
@@ -472,16 +551,16 @@ final class SmartShaderPackPatcher {
         for (EuphoriaColor color : colors) {
             String suffix = color.blockSuffix.isEmpty() ? "" : "_" + color.blockSuffix;
             for (String family : List.of("lightbulb", "illuminant_slab", "illuminant_panel", "wall_lamp", "rodlamp", "edge_light", "edge_light_top")) {
-                for (int power = 0; power <= 14; power++) {
+                for (int power = 0; power <= EUPHORIA_DYNAMIC_MAX_POWER; power++) {
                     selectors.add("simplylight:" + family + suffix + ":smart_power=" + power);
                 }
             }
-            for (int power = 0; power <= 14; power++) {
+            for (int power = 0; power <= EUPHORIA_DYNAMIC_MAX_POWER; power++) {
                 selectors.add("simplylight:lamp_post" + suffix + ":position=top:smart_power=" + power);
             }
             String illuminant = color.blockSuffix.isEmpty() ? "illuminant_block" : "illuminant_" + color.blockSuffix + "_block";
             for (String block : List.of(illuminant, illuminant + "_on")) {
-                for (int power = 0; power <= 14; power++) {
+                for (int power = 0; power <= EUPHORIA_DYNAMIC_MAX_POWER; power++) {
                     selectors.add("simplylight:" + block + ":on=true:smart_power=" + power);
                 }
             }
@@ -497,11 +576,15 @@ final class SmartShaderPackPatcher {
 
     private static String euphoriaTerrainSection() {
         return "    } else if ((mat > 20999 && mat < 21025) || (mat > 21099 && mat < 21125)) {\n"
-                + "        emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
                 + "        if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming\n"
-                + "            float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(blockLightEmission) / 15.0);\n"
-                + "            float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, " + EUPHORIA_TEXTURE_MINIMUM_POWER + ".0 / 15.0);\n"
-                + "            color.rgb *= simplyLightSmartTexturePower;\n"
+                + "            noSmoothLighting = true; noDirectionalShading = true;\n"
+                + visualDimmingVariables("            ", "blockLightEmission")
+                + applyVisualLightmapDimmingCode("            ", "blockLightEmission")
+                + euphoriaVisualEmissionCode("            ")
+                + applyTextureDimmingCode("            ")
+                + "        }\n"
+                + "        else {\n"
+                + "            emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
                 + "        }\n"
                 + "    }";
     }
@@ -520,17 +603,28 @@ final class SmartShaderPackPatcher {
     private static String euphoriaIpbrSection() {
         return "    } else if ((mat > 20999 && mat < 21025) || (mat > 21099 && mat < 21125)) {\n"
                 + "    #ifdef GBUFFERS_TERRAIN\n"
-                + "        emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
                 + "        if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming\n"
-                + "            float simplyLightSmartEmissionPower = smoothstep(0.0, 1.0, float(blockLightEmission) / 15.0);\n"
-                + "            float simplyLightSmartTexturePower = max(simplyLightSmartEmissionPower, " + EUPHORIA_TEXTURE_MINIMUM_POWER + ".0 / 15.0);\n"
-                + "            color.rgb *= simplyLightSmartTexturePower;\n"
+                + "            noSmoothLighting = true; noDirectionalShading = true;\n"
+                + visualDimmingVariables("            ", "blockLightEmission")
+                + applyVisualLightmapDimmingCode("            ", "blockLightEmission")
+                + euphoriaVisualEmissionCode("            ")
+                + applyTextureDimmingCode("            ")
+                + "        }\n"
+                + "        else {\n"
+                + "            emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
                 + "        }\n"
                 + "    #else\n"
                 + "        bool doesNothing;\n"
                 + "        emission = DoAutomaticEmission(noSmoothLighting, doesNothing, color.rgb, 0.0, 15, 1.0);\n"
                 + "    #endif\n"
                 + "}";
+    }
+
+    /** Mirrors Euphoria's material-emission formula with the visual dimming curve only. */
+    private static String euphoriaVisualEmissionCode(String indentation) {
+        return indentation + "float simplyLightSmartVisualLightLevel = max(float(lmCoord.x > 0.99), simplyLightSmartTextureBrightness);\n"
+                + indentation + "float simplyLightSmartVisualBaseEmission = pow3(GetLuminance(color.rgb)) * pow1_5(simplyLightSmartVisualLightLevel);\n"
+                + indentation + "emission = max(1.0, (simplyLightSmartVisualBaseEmission - 0.1) * 2.5);\n";
     }
 
     private static String euphoriaVoxelizationAnchor() {
