@@ -2,7 +2,7 @@
 
 All notable changes to Simply Light - Smart! are documented in this file.
 
-## [0.5.1-beta.1] - 2026-08-13
+## [0.5.1] - 2026-08-13
 
 ### Fixed
 
