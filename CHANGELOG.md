@@ -2,6 +2,14 @@
 
 All notable changes to Simply Light - Smart! are documented in this file.
 
+## [0.5.1-beta.1] - 2026-08-13
+
+### Fixed
+
+- Smart Switches no longer pass their received redstone signal to neighboring
+  blocks, so multiple switches can be placed together without controlling one
+  another.
+
 ## [0.5.0] - 2026-08-11
 
 ### Added
