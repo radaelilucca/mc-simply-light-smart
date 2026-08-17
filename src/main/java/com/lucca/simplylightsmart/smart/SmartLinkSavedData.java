@@ -73,6 +73,21 @@ public final class SmartLinkSavedData extends SavedData {
                 .map(entry -> migrateTarget(entry.getKey(), target, entry.getValue()));
     }
 
+    /**
+     * Looks up a target owner without applying fallback-address migration.
+     * Diagnostics use this to report the saved state without changing it.
+     */
+    public Optional<SmartTargetAddress> ownerOfReadOnly(SmartTargetAddress target) {
+        SmartTargetAddress owner = switchByTarget.get(target);
+        if (owner != null) {
+            return Optional.of(owner);
+        }
+        return switchByTarget.entrySet().stream()
+                .filter(entry -> entry.getKey().matchesFallback(target))
+                .findFirst()
+                .map(Map.Entry::getValue);
+    }
+
     public boolean isOwnedBy(SmartTargetAddress target, SmartTargetAddress switchPos) {
         return ownerOf(target).map(switchPos::equals).orElse(false);
     }
@@ -87,6 +102,19 @@ public final class SmartLinkSavedData extends SavedData {
                 .filter(entry -> entry.getKey().matchesFallback(switchPos))
                 .findFirst()
                 .map(entry -> migrateSignal(entry.getKey(), switchPos, entry.getValue()))
+                .orElse(0);
+    }
+
+    /** Returns a stored Switch signal without applying fallback-address migration. */
+    public int signalOfReadOnly(SmartTargetAddress switchPos) {
+        Integer signal = signalBySwitch.get(switchPos);
+        if (signal != null) {
+            return signal;
+        }
+        return signalBySwitch.entrySet().stream()
+                .filter(entry -> entry.getKey().matchesFallback(switchPos))
+                .findFirst()
+                .map(Map.Entry::getValue)
                 .orElse(0);
     }
 
