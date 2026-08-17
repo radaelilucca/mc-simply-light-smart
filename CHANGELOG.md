@@ -8,6 +8,8 @@ All notable changes to Simply Light - Smart! are documented in this file.
 
 - Smart Debugger now reports unavailable and mismatched Smart Switch links
   without changing saved links while inspecting them.
+- Fully dimmed lights now appear turned off in supported shader packs,
+  including Euphoria Patches.
 
 ## [0.5.1] - 2026-08-13
 
