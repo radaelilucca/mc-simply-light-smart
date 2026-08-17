@@ -35,7 +35,7 @@ import java.util.zip.ZipFile;
  */
 final class SmartShaderPackPatcher {
     private static final String PATCH_LABEL = "Simply Light Smart";
-    private static final String PATCH_FORMAT = "9";
+    private static final String PATCH_FORMAT = "10";
     private static final String MANIFEST_FILE = ".simply-light-smart-patch.properties";
     private static final String TEMP_SUFFIX = ".simply-light-smart.tmp";
     private static final String BLOCK_PROPERTIES = "shaders/block.properties";
@@ -479,12 +479,14 @@ final class SmartShaderPackPatcher {
                 + indentation + "float simplyLightSmartVisualEmissionPower = smoothstep(0.0, 1.0, simplyLightSmartTextureBrightness);\n"
                 + indentation + "float simplyLightSmartTexturePower = max(simplyLightSmartVisualEmissionPower, "
                 + TEXTURE_MINIMUM_POWER + ".0 / 15.0);\n"
+                + indentation + "float simplyLightSmartTextureIsOff = float(simplyLightSmartTextureBrightness <= 0.0);\n"
                 + indentation + "float simplyLightSmartColorPeak = max(color.r, max(color.g, color.b));\n"
                 + indentation + "float simplyLightSmartTextureMask = smoothstep(0.55, 0.90, simplyLightSmartColorPeak);\n";
     }
 
     private static String applyTextureDimmingCode(String indentation) {
-        return indentation + "color.rgb *= mix(1.0, simplyLightSmartTexturePower, simplyLightSmartTextureMask);\n";
+        return indentation + "float simplyLightSmartEffectiveTextureMask = max(simplyLightSmartTextureMask, simplyLightSmartTextureIsOff);\n"
+                + indentation + "color.rgb *= mix(1.0, simplyLightSmartTexturePower, simplyLightSmartEffectiveTextureMask);\n";
     }
 
     /**
@@ -624,7 +626,7 @@ final class SmartShaderPackPatcher {
     private static String euphoriaVisualEmissionCode(String indentation) {
         return indentation + "float simplyLightSmartVisualLightLevel = max(float(lmCoord.x > 0.99), simplyLightSmartTextureBrightness);\n"
                 + indentation + "float simplyLightSmartVisualBaseEmission = pow3(GetLuminance(color.rgb)) * pow1_5(simplyLightSmartVisualLightLevel);\n"
-                + indentation + "emission = max(1.0, (simplyLightSmartVisualBaseEmission - 0.1) * 2.5);\n";
+                + indentation + "emission = simplyLightSmartTextureIsOff > 0.0 ? 0.0 : max(1.0, (simplyLightSmartVisualBaseEmission - 0.1) * 2.5);\n";
     }
 
     private static String euphoriaVoxelizationAnchor() {
