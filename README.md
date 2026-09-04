@@ -33,9 +33,19 @@ The addon does not require Create or Sable to run.
 
 ## Shader support
 
-Shader support is currently being implemented. The initial plan is to support
-BSL Shaders, Complementary Shaders - Reimagined, and Complementary Shaders -
-Unbound.
+Lights dim and turn off correctly out of the box with
+[Solas Shader](https://www.curseforge.com/minecraft/shaders/solas-shader) and
+[BSL Shaders](https://www.curseforge.com/minecraft/shaders/bsl-shaders).
+
+For Complementary, the client-side patcher creates an optional `SLSmart`
+variant only when it finds an Euphoria Patches-generated shader folder. It
+does not alter the base Complementary pack. Select the generated variant in
+the shader menu to make the emissive texture follow each light's dimmer level.
+
+Tested patcher combinations:
+
+- Complementary Reimagined or Unbound r5.8.1 with Euphoria Patches 1.9.3
+- Complementary Reimagined or Unbound r5.9 with Euphoria Patches 1.10.0
 
 ## More information
 

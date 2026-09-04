@@ -2,6 +2,19 @@
 
 All notable changes to Simply Light - Smart! are documented in this file.
 
+## [0.6.0] - 2026-09-04
+
+### Added
+
+- Added shader-patcher support for Complementary Reimagined and Unbound r5.9
+  with Euphoria Patches 1.10.0.
+
+### Changed
+
+- Generated Euphoria shader variants now use the shorter `SLSmart` name.
+- The shader patcher now creates variants only for Euphoria Patches folders,
+  leaving base Complementary packs unchanged.
+
 ## [0.5.2] - 2026-08-17
 
 ### Fixed

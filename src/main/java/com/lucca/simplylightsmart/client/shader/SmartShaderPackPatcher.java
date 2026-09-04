@@ -34,14 +34,17 @@ import java.util.zip.ZipFile;
  * A second scan waits for Euphoria Patcher to finish creating its own derived folder.</p>
  */
 final class SmartShaderPackPatcher {
-    private static final String PATCH_LABEL = "Simply Light Smart";
-    private static final String PATCH_FORMAT = "10";
+    private static final String PATCH_LABEL = "SLSmart";
+    private static final String LEGACY_PATCH_LABEL = "Simply Light Smart";
+    private static final String EUPHORIA_SOURCE_LABEL = "EuphoriaPatches";
+    private static final String EUPHORIA_OUTPUT_LABEL = "Euphoria";
+    private static final String PATCH_FORMAT = "12";
     private static final String MANIFEST_FILE = ".simply-light-smart-patch.properties";
     private static final String TEMP_SUFFIX = ".simply-light-smart.tmp";
     private static final String BLOCK_PROPERTIES = "shaders/block.properties";
     private static final String TERRAIN_MATERIALS = "shaders/lib/materials/materialHandling/terrainMaterials.glsl";
     private static final String TERRAIN_IPBR = "shaders/lib/materials/materialHandling/terrainIPBR.glsl";
-    private static final String EUPHORIA_SOURCE_PROPERTIES = "shaders/blockProperties/1.13+/block.10948-31015.properties";
+    private static final String EUPHORIA_PROPERTIES_DIRECTORY = "shaders/blockProperties";
     private static final String EUPHORIA_VOXELIZATION = "shaders/lib/voxelization/lightVoxelization.glsl";
     private static final String PHOTONICS_LIGHTS = "shaders/ph_lights.json";
     private static final String EUPHORIA_SIGNATURE = "This block.properties file is exclusive to Euphoria Patches";
@@ -85,21 +88,18 @@ final class SmartShaderPackPatcher {
     private static boolean isCandidate(Path path) {
         String name = path.getFileName().toString();
         boolean supportedName = name.startsWith("ComplementaryReimagined_") || name.startsWith("ComplementaryUnbound_");
-        if (!supportedName || name.contains(" + " + PATCH_LABEL + "_")) {
+        if (!supportedName || !Files.isDirectory(path) || name.contains(" + " + PATCH_LABEL + "_") || name.contains(" + " + LEGACY_PATCH_LABEL + "_")) {
             return false;
         }
-        if (name.contains(" + EuphoriaPatches_")) {
-            return Files.isDirectory(path);
-        }
-        return Files.isDirectory(path) || (Files.isRegularFile(path) && name.endsWith(".zip"));
+        return name.contains(" + " + EUPHORIA_SOURCE_LABEL + "_");
     }
 
     private static void patchOne(Path shaderpacks, Path source) {
         String sourceName = source.getFileName().toString();
-        String targetName = withoutZipExtension(sourceName) + " + " + PATCH_LABEL + "_" + SimplyLightSmart.version();
+        String targetName = withoutZipExtension(outputSourceName(sourceName)) + " + " + PATCH_LABEL + "_" + SimplyLightSmart.version();
         Path target = shaderpacks.resolve(targetName);
         try {
-            SourceKind kind = sourceName.contains(" + EuphoriaPatches_") ? SourceKind.EUPHORIA : SourceKind.STOCK;
+            SourceKind kind = SourceKind.EUPHORIA;
             if (sourceAlreadyPatched(source, kind)) {
                 return;
             }
@@ -148,6 +148,11 @@ final class SmartShaderPackPatcher {
         return name.endsWith(".zip") ? name.substring(0, name.length() - ".zip".length()) : name;
     }
 
+    /** Shortens only the generated display name; Euphoria's source-folder name remains untouched. */
+    private static String outputSourceName(String sourceName) {
+        return sourceName.replace(" + " + EUPHORIA_SOURCE_LABEL + "_", " + " + EUPHORIA_OUTPUT_LABEL + "_");
+    }
+
     private static boolean isCurrentOutput(Path target, String sourceName, String fingerprint, SourceKind kind) throws IOException {
         if (!Files.isDirectory(target) || !isManagedOutput(target)) {
             return false;
@@ -160,14 +165,12 @@ final class SmartShaderPackPatcher {
                 && kind.name().equals(manifest.get("sourceKind"));
     }
 
-    /** Removes only older managed outputs derived from the same source shader pack. */
+    /** Removes managed outputs from earlier labels, formats, or addon versions for the same source pack. */
     private static void removeStaleOutputs(Path shaderpacks, Path currentTarget, String sourceName, SourceKind kind) {
-        String managedPrefix = withoutZipExtension(sourceName) + " + " + PATCH_LABEL + "_";
         try (var entries = Files.list(shaderpacks)) {
             List<Path> candidates = entries
                     .filter(Files::isDirectory)
                     .filter(path -> !path.equals(currentTarget))
-                    .filter(path -> path.getFileName().toString().startsWith(managedPrefix))
                     .toList();
             for (Path candidate : candidates) {
                 if (!isStaleOutput(candidate, sourceName, kind)) {
@@ -187,8 +190,7 @@ final class SmartShaderPackPatcher {
         }
         Map<String, String> manifest = readManifest(candidate);
         return sourceName.equals(manifest.get("sourceName"))
-                && kind.name().equals(manifest.get("sourceKind"))
-                && !SimplyLightSmart.version().equals(manifest.get("addonVersion"));
+                && kind.name().equals(manifest.get("sourceKind"));
     }
 
     private static boolean isManagedOutput(Path path) throws IOException {
@@ -223,12 +225,12 @@ final class SmartShaderPackPatcher {
             updateDigest(digest, source);
             return toHex(digest.digest());
         }
-        List<String> paths = kind == SourceKind.EUPHORIA
-                ? List.of(BLOCK_PROPERTIES, EUPHORIA_SOURCE_PROPERTIES, TERRAIN_MATERIALS, TERRAIN_IPBR, EUPHORIA_VOXELIZATION, PHOTONICS_LIGHTS)
-                : List.of(BLOCK_PROPERTIES, TERRAIN_MATERIALS, TERRAIN_IPBR);
-        for (String relative : paths) {
-            digest.update(relative.getBytes(StandardCharsets.UTF_8));
-            updateDigest(digest, source.resolve(relative));
+        List<Path> paths = kind == SourceKind.EUPHORIA
+                ? euphoriaFingerprintFiles(source)
+                : List.of(source.resolve(BLOCK_PROPERTIES), source.resolve(TERRAIN_MATERIALS), source.resolve(TERRAIN_IPBR));
+        for (Path path : paths) {
+            digest.update(source.relativize(path).toString().replace('\\', '/').getBytes(StandardCharsets.UTF_8));
+            updateDigest(digest, path);
         }
         return toHex(digest.digest());
     }
@@ -345,13 +347,13 @@ final class SmartShaderPackPatcher {
 
     private static void applyEuphoriaPatch(Path pack) throws IOException {
         Path propertiesPath = pack.resolve(BLOCK_PROPERTIES);
-        Path sourcePropertiesPath = pack.resolve(EUPHORIA_SOURCE_PROPERTIES);
         Path terrainPath = pack.resolve(TERRAIN_MATERIALS);
         Path ipbrPath = pack.resolve(TERRAIN_IPBR);
         Path voxelizationPath = pack.resolve(EUPHORIA_VOXELIZATION);
         Path photonicsPath = pack.resolve(PHOTONICS_LIGHTS);
+        List<Path> propertyPaths = euphoriaPropertyFiles(pack);
+        Path primarySourceProperties = primaryEuphoriaSourceProperties(propertyPaths, propertiesPath);
         String properties = readShaderText(propertiesPath);
-        String sourceProperties = readShaderText(sourcePropertiesPath);
         String terrain = readShaderText(terrainPath);
         String ipbr = readShaderText(ipbrPath);
         String voxelization = readShaderText(voxelizationPath);
@@ -360,18 +362,89 @@ final class SmartShaderPackPatcher {
             throw new IOException("the generated Euphoria pack signature was not found");
         }
         ensureNoMarker(properties, terrain, EUPHORIA_MARKER);
-        properties = euphoriaPropertyContent(properties);
-        sourceProperties = euphoriaPropertyContent(sourceProperties);
+        EuphoriaSchema schema = detectEuphoriaSchema(terrain, ipbr, voxelization);
+        for (Path propertyPath : propertyPaths) {
+            boolean ownsDynamicMaterials = propertyPath.equals(propertiesPath) || propertyPath.equals(primarySourceProperties);
+            writeShaderText(propertyPath, euphoriaPropertyContent(readShaderText(propertyPath), ownsDynamicMaterials));
+        }
         terrain = replaceUnique(terrain, euphoriaTerrainAnchor(), euphoriaTerrainSection(), "terrainMaterials.glsl");
-        ipbr = replaceUnique(ipbr, euphoriaIpbrAnchor(), euphoriaIpbrSection(), "terrainIPBR.glsl");
-        voxelization = replaceUnique(voxelization, euphoriaVoxelizationAnchor(), euphoriaVoxelizationSection(), "lightVoxelization.glsl");
+        ipbr = replaceUnique(ipbr, euphoriaIpbrAnchor(schema), euphoriaIpbrSection(schema), "terrainIPBR.glsl");
+        voxelization = replaceUnique(voxelization, euphoriaVoxelizationAnchor(schema), euphoriaVoxelizationSection(schema), "lightVoxelization.glsl");
         photonics = euphoriaPhotonicsContent(photonics);
-        writeShaderText(propertiesPath, properties);
-        writeShaderText(sourcePropertiesPath, sourceProperties);
         writeShaderText(terrainPath, terrain);
         writeShaderText(ipbrPath, ipbr);
         writeShaderText(voxelizationPath, voxelization);
         writeShaderText(photonicsPath, photonics);
+    }
+
+    /**
+     * Euphoria's property fragments are an input to its optional auto-merger.  The generated
+     * block.properties is needed immediately, while the source fragment preserves the patch
+     * when Euphoria merges the files again on a later launch.
+     */
+    private static List<Path> euphoriaPropertyFiles(Path pack) throws IOException {
+        Path propertiesPath = pack.resolve(BLOCK_PROPERTIES);
+        List<Path> paths = new ArrayList<>();
+        paths.add(propertiesPath);
+        Path fragmentsDirectory = pack.resolve(EUPHORIA_PROPERTIES_DIRECTORY);
+        if (!Files.isDirectory(fragmentsDirectory)) {
+            throw new IOException("required Euphoria properties directory is missing");
+        }
+        List<Path> fragments;
+        try (var stream = Files.walk(fragmentsDirectory)) {
+            fragments = stream.filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".properties"))
+                    .sorted(Comparator.comparing(path -> pack.relativize(path).toString()))
+                    .toList();
+        }
+        for (Path fragment : fragments) {
+            if (readShaderText(fragment).contains("simplylight:")) {
+                paths.add(fragment);
+            }
+        }
+        if (paths.size() == 1) {
+            throw new IOException("no Euphoria property fragment contains Simply Light entries");
+        }
+        return paths;
+    }
+
+    private static List<Path> euphoriaFingerprintFiles(Path pack) throws IOException {
+        List<Path> paths = new ArrayList<>(euphoriaPropertyFiles(pack));
+        paths.add(pack.resolve(TERRAIN_MATERIALS));
+        paths.add(pack.resolve(TERRAIN_IPBR));
+        paths.add(pack.resolve(EUPHORIA_VOXELIZATION));
+        paths.add(pack.resolve(PHOTONICS_LIGHTS));
+        return paths;
+    }
+
+    /** Selects the fragment that owns the most Simply Light selectors, independent of its filename. */
+    private static Path primaryEuphoriaSourceProperties(List<Path> propertyPaths, Path generatedProperties) throws IOException {
+        Path primary = null;
+        int highestSelectorCount = 0;
+        for (Path path : propertyPaths) {
+            if (path.equals(generatedProperties)) {
+                continue;
+            }
+            int selectorCount = countOccurrences(readShaderText(path), "simplylight:");
+            if (selectorCount > highestSelectorCount) {
+                primary = path;
+                highestSelectorCount = selectorCount;
+            }
+        }
+        if (primary == null) {
+            throw new IOException("could not identify the Euphoria property fragment for Simply Light");
+        }
+        return primary;
+    }
+
+    private static int countOccurrences(String content, String value) {
+        int count = 0;
+        int offset = 0;
+        while ((offset = content.indexOf(value, offset)) >= 0) {
+            count++;
+            offset += value.length();
+        }
+        return count;
     }
 
     private static boolean isEuphoria(String properties, String terrain) {
@@ -502,7 +575,7 @@ final class SmartShaderPackPatcher {
                 + indentation + "}\n";
     }
 
-    private static String euphoriaPropertyContent(String content) {
+    private static String euphoriaPropertyContent(String content, boolean ownsDynamicMaterials) {
         StringBuilder result = new StringBuilder(content.length() + 8192);
         int index = 0;
         while (index < content.length()) {
@@ -530,7 +603,8 @@ final class SmartShaderPackPatcher {
             }
             index = end;
         }
-        return result.toString().stripTrailing() + "\n\n" + euphoriaPropertySection() + "\n";
+        String patched = result.toString().stripTrailing();
+        return ownsDynamicMaterials ? patched + "\n\n" + euphoriaPropertySection() + "\n" : patched + "\n";
     }
 
     private static String euphoriaPropertySection() {
@@ -591,35 +665,55 @@ final class SmartShaderPackPatcher {
                 + "    }";
     }
 
-    private static String euphoriaIpbrAnchor() {
-        return "    } else if (mat > 20999 && mat < 21025) {\n"
-                + "    #ifdef GBUFFERS_TERRAIN\n"
-                + "        emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
-                + "    #else\n"
-                + "        bool doesNothing;\n"
-                + "        emission = DoAutomaticEmission(noSmoothLighting, doesNothing, color.rgb, 0.0, 15, 1.0);\n"
-                + "    #endif\n"
-                + "}";
+    private static EuphoriaSchema detectEuphoriaSchema(String terrain, String ipbr, String voxelization) throws IOException {
+        if (!terrain.contains(euphoriaTerrainAnchor())) {
+            throw new IOException("unsupported Euphoria terrain-material schema");
+        }
+        for (EuphoriaSchema schema : EuphoriaSchema.values()) {
+            if (ipbr.contains(euphoriaIpbrAnchor(schema)) && voxelization.contains(euphoriaVoxelizationAnchor(schema))) {
+                return schema;
+            }
+        }
+        throw new IOException("unsupported or inconsistent Euphoria material schema");
     }
 
-    private static String euphoriaIpbrSection() {
-        return "    } else if ((mat > 20999 && mat < 21025) || (mat > 21099 && mat < 21125)) {\n"
-                + "    #ifdef GBUFFERS_TERRAIN\n"
-                + "        if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming\n"
-                + "            noSmoothLighting = true; noDirectionalShading = true;\n"
-                + visualDimmingVariables("            ", "blockLightEmission")
-                + applyVisualLightmapDimmingCode("            ", "blockLightEmission")
-                + euphoriaVisualEmissionCode("            ")
-                + applyTextureDimmingCode("            ")
-                + "        }\n"
-                + "        else {\n"
-                + "            emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
-                + "        }\n"
-                + "    #else\n"
-                + "        bool doesNothing;\n"
-                + "        emission = DoAutomaticEmission(noSmoothLighting, doesNothing, color.rgb, 0.0, 15, 1.0);\n"
-                + "    #endif\n"
-                + "}";
+    private static String euphoriaIpbrAnchor(EuphoriaSchema schema) {
+        String indentation = schema == EuphoriaSchema.LEGACY ? "    " : "        ";
+        String directiveIndentation = schema == EuphoriaSchema.LEGACY ? indentation : indentation + "    ";
+        String closingIndentation = schema == EuphoriaSchema.LEGACY ? "" : indentation;
+        return indentation + "} else if (mat > 20999 && mat < 21025) {\n"
+                + directiveIndentation + "#ifdef GBUFFERS_TERRAIN\n"
+                + directiveIndentation + "    emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
+                + directiveIndentation + "#else\n"
+                + directiveIndentation + "    bool doesNothing;\n"
+                + directiveIndentation + "    emission = DoAutomaticEmission(noSmoothLighting, doesNothing, color.rgb, 0.0, 15, 1.0);\n"
+                + directiveIndentation + "#endif\n"
+                + closingIndentation + "}";
+    }
+
+    private static String euphoriaIpbrSection(EuphoriaSchema schema) {
+        String indentation = schema == EuphoriaSchema.LEGACY ? "    " : "        ";
+        String directiveIndentation = schema == EuphoriaSchema.LEGACY ? indentation : indentation + "    ";
+        String closingIndentation = schema == EuphoriaSchema.LEGACY ? "" : indentation;
+        String nestedIndentation = directiveIndentation + "    ";
+        String contentIndentation = nestedIndentation + "    ";
+        return indentation + "} else if ((mat > 20999 && mat < 21025) || (mat > 21099 && mat < 21125)) {\n"
+                + directiveIndentation + "#ifdef GBUFFERS_TERRAIN\n"
+                + nestedIndentation + "if (mat > 21099 && mat < 21125) { // Simply Light - Smart! texture dimming\n"
+                + contentIndentation + "noSmoothLighting = true; noDirectionalShading = true;\n"
+                + visualDimmingVariables(contentIndentation, "blockLightEmission")
+                + applyVisualLightmapDimmingCode(contentIndentation, "blockLightEmission")
+                + euphoriaVisualEmissionCode(contentIndentation)
+                + applyTextureDimmingCode(contentIndentation)
+                + nestedIndentation + "}\n"
+                + nestedIndentation + "else {\n"
+                + contentIndentation + "emission = DoAutomaticEmission(noSmoothLighting, noDirectionalShading, color.rgb, lmCoord.x, blockLightEmission, 1.0);\n"
+                + nestedIndentation + "}\n"
+                + directiveIndentation + "#else\n"
+                + directiveIndentation + "    bool doesNothing;\n"
+                + directiveIndentation + "    emission = DoAutomaticEmission(noSmoothLighting, doesNothing, color.rgb, 0.0, 15, 1.0);\n"
+                + directiveIndentation + "#endif\n"
+                + closingIndentation + "}";
     }
 
     /** Mirrors Euphoria's material-emission formula with the visual dimming curve only. */
@@ -629,27 +723,31 @@ final class SmartShaderPackPatcher {
                 + indentation + "emission = simplyLightSmartTextureIsOff > 0.0 ? 0.0 : max(1.0, (simplyLightSmartVisualBaseEmission - 0.1) * 2.5);\n";
     }
 
-    private static String euphoriaVoxelizationAnchor() {
-        return "                                if (mat == 21024) return  80; // Pink Modded Blocks\n"
-                + "                                if (mat == 30008) return 254; // Tinted Glass";
+    private static String euphoriaVoxelizationAnchor(EuphoriaSchema schema) {
+        String indentation = schema == EuphoriaSchema.LEGACY ? "                                " : "                                        ";
+        String pinkMaterial = schema == EuphoriaSchema.LEGACY ? " 80" : "80";
+        return indentation + "if (mat == 21024) return " + pinkMaterial + "; // Pink Modded Blocks\n"
+                + indentation + "if (mat == 30008) return 254; // Tinted Glass";
     }
 
-    private static String euphoriaVoxelizationSection() {
-        return "                                if (mat == 21024) return  80; // Pink Modded Blocks\n"
-                + "                                if (mat == 21100) return  97; // White Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21102) return  43; // Brown Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21104) return  70; // Red Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21106) return  71; // Orange Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21108) return  72; // Yellow Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21110) return  73; // Lime Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21112) return  74; // Green Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21114) return  75; // Cyan Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21116) return  76; // Light Blue Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21118) return  77; // Blue Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21120) return  78; // Purple Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21122) return  79; // Magenta Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 21124) return  80; // Pink Simply Light - Smart! Blocks\n"
-                + "                                if (mat == 30008) return 254; // Tinted Glass";
+    private static String euphoriaVoxelizationSection(EuphoriaSchema schema) {
+        String indentation = schema == EuphoriaSchema.LEGACY ? "                                " : "                                        ";
+        String padding = schema == EuphoriaSchema.LEGACY ? " " : "";
+        return indentation + "if (mat == 21024) return " + padding + "80; // Pink Modded Blocks\n"
+                + indentation + "if (mat == 21100) return " + padding + "97; // White Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21102) return " + padding + "43; // Brown Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21104) return " + padding + "70; // Red Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21106) return " + padding + "71; // Orange Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21108) return " + padding + "72; // Yellow Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21110) return " + padding + "73; // Lime Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21112) return " + padding + "74; // Green Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21114) return " + padding + "75; // Cyan Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21116) return " + padding + "76; // Light Blue Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21118) return " + padding + "77; // Blue Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21120) return " + padding + "78; // Purple Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21122) return " + padding + "79; // Magenta Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 21124) return " + padding + "80; // Pink Simply Light - Smart! Blocks\n"
+                + indentation + "if (mat == 30008) return 254; // Tinted Glass";
     }
 
     private static String euphoriaPhotonicsContent(String content) throws IOException {
@@ -743,6 +841,12 @@ final class SmartShaderPackPatcher {
     private enum SourceKind {
         STOCK,
         EUPHORIA
+    }
+
+    /** Structural layouts used by Euphoria Patches 1.9 and 1.10 respectively. */
+    private enum EuphoriaSchema {
+        LEGACY,
+        CURRENT
     }
 
     private enum EuphoriaColor {
