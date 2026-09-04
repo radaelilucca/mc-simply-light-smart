@@ -54,8 +54,6 @@ outline.
 
 ![A Smart Switch relaying its redstone signal to linked lights](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20switch.gif?raw=true)
 
-![A Smart Switch updating its linked lights](https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20switch-blink.gif?raw=true)
-
 ## Crafting
 
 Craft a **Smart Switch** with iron, redstone, a comparator, an ender pearl, and
@@ -64,24 +62,13 @@ an amethyst shard.
 
 ## Shader support
 
-Simply Light - Smart! has initial support for compatible Complementary shader
-packs:
+Lights dim and turn off correctly out of the box with Solas, BSL, and the base
+versions of Complementary Reimagined and Complementary Unbound.
 
-- Complementary Reimagined
-- Complementary Unbound
-- Complementary packs enhanced with Euphoria Patches
-
-When the game starts, the addon looks for these packs in your `shaderpacks`
-folder and creates a Simply Light - Smart! version beside the original. Your
-original pack is left untouched.
-
-Open the shader menu and select the generated Simply Light - Smart! version.
-The addon never changes your active shader automatically. In the generated
-pack, a light's visible glow fades with its redstone-controlled brightness,
-while Euphoria's colored lighting remains available.
-
-This is initial shader support: other shader packs, including BSL, are not yet
-prepared automatically.
+For Complementary Reimagined and Unbound, the addon can also prepare a version
+for use with Euphoria Patches. When the game starts, it looks for an
+Euphoria-generated shader folder and creates an optional `SLSmart` version
+beside it. The original packs are never changed.
 
 <img src="https://github.com/radaelilucca/mc-simply-light-smart/blob/main/docs/gallery/AE%20-%20shader.gif?raw=true" alt="Simply Light blocks with shader support" width="240">
 
@@ -92,8 +79,8 @@ prepared automatically.
 - [Simply Light 1.5.3+1.21.1-b4](https://www.curseforge.com/minecraft/mc-mods/simply-light)
 - Optional [Sable](https://github.com/ryanhcode/sable) 2.0.3 support for
   sublevel-aware linking
-- Shader support tested with Complementary Reimagined r5.8.1 and Complementary
-  Unbound r5.8.1, with or without Euphoria Patches 1.9.3
+- Shader patcher tested with Complementary Reimagined and Unbound r5.8.1 with
+  Euphoria Patches 1.9.3, and r5.9 with Euphoria Patches 1.10.0
 
 The addon does not require Create or Sable to run.
 
