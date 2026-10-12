@@ -176,6 +176,11 @@ public final class SmartSwitchBlockEntity extends BlockEntity {
                 <= MAX_LINK_DISTANCE * MAX_LINK_DISTANCE;
     }
 
+    /** Measures physical endpoint distance, including Sable sublevel projection when available. */
+    public static double distanceSquared(ServerLevel level, BlockPos first, BlockPos second) {
+        return SableLinkDistance.distanceSquared(level, first, second);
+    }
+
     /** Queues linked targets and never forces their chunks to load. */
     private void enqueueTargetRefreshes(Iterable<SmartTargetAddress> targets) {
         if (!(level instanceof ServerLevel serverLevel)) {

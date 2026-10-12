@@ -38,6 +38,11 @@ public final class SmartLinkerItem extends Item {
         return selection(stack).targets().stream().map(target -> target.fallback().pos()).toList();
     }
 
+    /** Address-aware selection used by the server-side Linker highlight query. */
+    public static List<SmartTargetAddress> selectedTargetsWithAddresses(ItemStack stack) {
+        return selection(stack).targets();
+    }
+
     /** The dimension stored for the current selection, or {@code null} when empty. */
     public static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> selectedDimension(ItemStack stack) {
         return selection(stack).targets().isEmpty() ? null : selection(stack).targets().getFirst().fallback().dimension();
