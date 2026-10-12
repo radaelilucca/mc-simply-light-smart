@@ -2,6 +2,23 @@
 
 All notable changes to Simply Light - Smart! are documented in this file.
 
+## [0.7.0] - 2026-10-12
+
+### Added
+
+- Holding the Smart Linker now draws lines between selected lights and their
+  controlling switches when they are within 120 blocks. The lines follow the
+  visible shape of partial blocks.
+
+### Changed
+
+- The Smart Switch and Smart Linker now have updated models and textures.
+
+### Fixed
+
+- Colored light remains visible as linked lights dim in supported Euphoria
+  shader packs.
+
 ## [0.6.0] - 2026-09-04
 
 ### Added
