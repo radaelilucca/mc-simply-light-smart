@@ -15,7 +15,7 @@ a restauração dos plot chunks.
 | 2. Defaults e cálculo de estado | Validada | `a318d68` | Emissão e reinício corretos |
 | 3. Metadado e índice persistentes | Validada | `480a6a3` | Reutilização confirmada; fallback seguro para chunks ausentes |
 | 4. Ciclo seguro do Switch | Validada | `8163a41` | Links e redstone corretos entre level e sublevel |
-| 5. Endereços conscientes de sublevel | Adiada | — | Split e merge ficam fora do escopo da correção crítica |
+| 5. Endereços conscientes de sublevel | Parcialmente implementada | — | UUID persistente e posição local implementados em `SmartTargetAddress`; split e merge continuam adiados e sem validação registrada |
 
 ## Fase 0 — Base de teste
 
@@ -61,6 +61,10 @@ Ponto de teste: abrir duas vezes o mapa de regressão sem remover as luzes.
   não foi carregado.
 
 ## Fase 5 — Endereços conscientes de sublevel
+
+**Progresso conferido no código: parcialmente implementada.** `SmartTargetAddress` captura UUID persistente do sublevel e posição local, resolve endereços sem carregar chunks e mantém `GlobalPos` como fallback para mundos sem Sable e dados legados. `SmartLinkSavedData` também faz migração preguiçosa de endereços de fallback. O histórico do changelog registra links funcionais entre level e sublevels.
+
+Split, merge e reconciliação de topologia continuam adiados. Não há neste documento registro da validação dessas operações.
 
 - Representar alvos do Sable por UUID persistente do sublevel e posição local,
   mantendo `GlobalPos` para o mundo normal.

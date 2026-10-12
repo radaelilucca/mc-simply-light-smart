@@ -99,7 +99,41 @@ portanto não há uma biblioteca paralela nem um mod Sable Companion separado.
   aplicar a pose de renderização do sublevel ao outline. As posições persistidas
   permanecem nas coordenadas locais do plot, para acompanharem estruturas móveis.
 
-## Fases e commits
+## Progresso conferido no código
+
+| Fase | Estado atual | Evidência no código | Validação manual |
+| --- | --- | --- | --- |
+| 1. Núcleo e sinal remoto | Implementada | `SmartSwitchBlock`, `SmartSwitchBlockEntity`, `SmartLinkSavedData`, `OriginalLightAdapter` | O changelog registra o suporte e correções em releases; a matriz completa desta fase não está documentada como executada. |
+| 2. Linker e vínculos | Implementada | `SmartLinkerItem`, `SmartTargetAddress`, `SmartSwitchBlockEntity.applyLinks` | O changelog registra seleção e persistência; não há registro de execução de todos os casos da matriz. |
+| 3. Feedback visual e Sable | Implementada | `SmartLinkerSelectionOutline`, `SableOutlineProjection`, `SableLinkDistance`, `SmartTargetAddress` | O changelog registra operação entre level e sublevels; split/merge seguem fora do escopo. |
+| 4. Conteúdo e acabamento | Implementada | registros, receitas, loot table, modelos, texturas e traduções | Conteúdo incluído nos releases publicados. |
+| 5. Verificação final | Parcial / sem checklist registrado | Build/resource e cenários listados abaixo não possuem relatório de execução neste plano | Não marcar como concluída até registrar a matriz executada. |
+
+### Fase 1 — Base e sinal remoto
+
+Implementada. O projeto registra Smart Switch, Block Entity e Saved Data; mantém o índice persistente de propriedade exclusiva; guarda o último sinal; e usa o sinal remoto nas famílias originais habilitadas pelo `OriginalLightAdapter`. A implementação atual cobre Illuminant Blocks, Bulbs, Slabs/Panels (`ThinLamp`), Fixtures, Rods, Edges/Top Edges e Columns. O plano original falava em quatro famílias; o escopo cresceu junto com a migração para os blocos originais do Simply Light.
+
+Os limites atuais de 64 alvos e 128 blocos estão como constantes de implementação, não como configuração de servidor.
+
+### Fase 2 — Linker e configuração de vínculos
+
+Implementada. O Linker mantém seleção persistente no componente do item; clique alterna alvos; Shift + clique no switch aplica a lista; Shift + clique no ar limpa a seleção. `applyLinks` valida duplicatas, dimensão, distância, alvo carregado e suportado, limite de alvos e exclusividade antes de substituir os vínculos.
+
+### Fase 3 — Feedback visual e Sable
+
+Implementada no código. O renderer desenha outlines verdes para a seleção, incluindo shapes compostos das Columns. A ponte cliente usa Sable Companion por reflexão para projetar o outline no espaço renderizado do sublevel. No servidor, `SableLinkDistance` calcula a distância física; `SmartTargetAddress` persiste UUID do sublevel e posição local, com fallback para posições globais. Sem Sable, a integração opcional retorna à posição e distância vanilla quando aplicável.
+
+O changelog registra suporte de links entre level e sublevels. O código e o histórico consultados não comprovam a matriz completa de assemble/disassemble, split/merge ou todas as combinações de instalação; split/merge permanecem explicitamente adiados no plano de contraptions.
+
+### Fase 4 — Conteúdo e acabamento
+
+Implementada e incluída nos releases: modelos, texturas, nomes, aba criativa, receitas, loot table, traduções e feedback de vínculo.
+
+### Fase 5 — Verificação final
+
+O código cobre os cenários funcionais listados, mas este repositório não contém checklist ou relatório que comprove a execução completa em mundo novo e existente, incluindo destruição, chunks descarregados, relink, lista vazia, conflito entre switches e a matriz NeoForge/Create/Sable. Registrar essa validação antes de promover a fase a concluída.
+
+## Registro original de commits
 
 ### Fase 1 — Base e sinal remoto
 
@@ -132,25 +166,6 @@ portanto não há uma biblioteca paralela nem um mod Sable Companion separado.
 - Testar seleção e vínculo entre mundo normal, um sublevel e dois sublevels.
 
 **Commit previsto:** `feat: add smart switch selection feedback`
-
-### Fase 4 — Conteúdo e acabamento
-
-**Status: implementada.**
-
-- Criar modelos, texturas, nomes e abas criativas para Smart Switch e Linker.
-- Adicionar receitas, loot tables e documentação de uso.
-- Revisar mensagens de erro e sucesso do vínculo.
-
-**Commit previsto:** `feat: add smart switch content and recipes`
-
-### Fase 5 — Verificação final
-
-- Executar build e validar recursos JSON.
-- Testar em mundo novo e mundo existente.
-- Testar destruição de switch, destruição de dimmer, chunks descarregados,
-  relink, lista vazia e conflito entre switches.
-- Repetir o conjunto de testes na matriz exata: NeoForge `21.1.234`, Create
-  `6.0.10` e Sable `2.0.3`, com os alvos em estruturas móveis.
 
 ## Critérios de aceite
 
