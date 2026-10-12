@@ -1,5 +1,10 @@
 # Pivot de arquitetura — Fase 0: spike de viabilidade
 
+> **Estado:** spike histórico implementado e sucedido pela arquitetura documentada em
+> `architecture-pivot-plan.md`. A implementação atual estende o suporte às famílias
+> originais do Simply Light. O roteiro manual abaixo é o contrato de validação do
+> spike original; este arquivo não registra a execução de toda essa matriz.
+
 ## Escopo implementado
 
 Somente a Lightbulb original do Simply Light participa do spike. O addon não
@@ -39,5 +44,6 @@ Lightbulb.
 4. Repetir em servidor dedicado e com Complementary/Euphoria, sem alterar
    `block.properties`.
 
-O gate da Fase 0 só é aprovado depois dessa validação manual. A Fase 1 não
-deve ser retomada antes disso.
+O plano original condicionava a Fase 1 a esse gate. O desenvolvimento prosseguiu
+e a implementação foi expandida; mantenha o roteiro como referência histórica,
+sem tratá-lo como o próximo passo atual.

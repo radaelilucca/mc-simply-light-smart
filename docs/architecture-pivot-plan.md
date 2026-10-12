@@ -1,5 +1,10 @@
 # Arquitetura: dimmer nos blocos originais
 
+> **Estado atual:** arquitetura implementada nas famílias listadas abaixo. O
+> Smart Switch, Linker e feedback visual/Sable também estão implementados; o
+> plano de implementação e o registro de validação estão em
+> `smart-switch-implementation-plan.md`.
+
 ## Objetivo
 
 O addon torna os blocos já registrados pelo **Simply Light** dimerizáveis, sem
@@ -50,9 +55,9 @@ para cima e a variante `_on` dimeriza para baixo.
 - Illuminant Edges e Top Edges
 - Illuminant Columns
 
-## Limite de shaders
+## Integração com shaders
 
-A emissão vanilla acompanha `smart_power`. Shaders que identificam as luzes
-somente pelo ID do bloco podem continuar renderizando uma camada emissiva em
-níveis baixos ou em `0`. A correção oficial para esse caso deve reconhecer
-`smart_power` no shader, sem reintroduzir blocos duplicados no addon.
+A emissão vanilla acompanha `smart_power`. Para Euphoria Patches, o addon
+também fornece um patcher cliente opcional que gera uma variante `SLSmart` e
+faz a emissão e as texturas respeitarem o estado. Detalhes e combinações
+testadas estão em `shader-support.md` e no README.

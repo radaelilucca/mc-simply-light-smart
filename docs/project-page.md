@@ -1,9 +1,5 @@
 # Simply Light - Smart!
 
-> **Early-stage development:** This mod is under active development. Features,
-> balance, recipes, and compatibility may change. Before the first release,
-> use it at your own risk.
-
 **Simply Light - Smart!** is an addon for
 [Simply Light](https://www.curseforge.com/minecraft/mc-mods/simply-light) that
 lets its lights respond smoothly to redstone. It also adds the **Smart Switch**
