@@ -38,7 +38,7 @@ final class SmartShaderPackPatcher {
     private static final String LEGACY_PATCH_LABEL = "Simply Light Smart";
     private static final String EUPHORIA_SOURCE_LABEL = "EuphoriaPatches";
     private static final String EUPHORIA_OUTPUT_LABEL = "Euphoria";
-    private static final String PATCH_FORMAT = "12";
+    private static final String PATCH_FORMAT = "13";
     private static final String MANIFEST_FILE = ".simply-light-smart-patch.properties";
     private static final String TEMP_SUFFIX = ".simply-light-smart.tmp";
     private static final String BLOCK_PROPERTIES = "shaders/block.properties";
@@ -369,7 +369,10 @@ final class SmartShaderPackPatcher {
         }
         terrain = replaceUnique(terrain, euphoriaTerrainAnchor(), euphoriaTerrainSection(), "terrainMaterials.glsl");
         ipbr = replaceUnique(ipbr, euphoriaIpbrAnchor(schema), euphoriaIpbrSection(schema), "terrainIPBR.glsl");
-        voxelization = replaceUnique(voxelization, euphoriaVoxelizationAnchor(schema), euphoriaVoxelizationSection(schema), "lightVoxelization.glsl");
+        voxelization = addAfterUnique(voxelization, "    int GetVoxelIDs(int mat) {",
+                euphoriaVoxelMaterialRemapping(), "lightVoxelization.glsl material lookup");
+        voxelization = addAfterUnique(voxelization, "                int voxelData = GetVoxelIDs(mat);",
+                euphoriaVoxelOffState(), "lightVoxelization.glsl voxel update");
         photonics = euphoriaPhotonicsContent(photonics);
         writeShaderText(terrainPath, terrain);
         writeShaderText(ipbrPath, ipbr);
@@ -730,24 +733,23 @@ final class SmartShaderPackPatcher {
                 + indentation + "if (mat == 30008) return 254; // Tinted Glass";
     }
 
-    private static String euphoriaVoxelizationSection(EuphoriaSchema schema) {
-        String indentation = schema == EuphoriaSchema.LEGACY ? "                                " : "                                        ";
-        String padding = schema == EuphoriaSchema.LEGACY ? " " : "";
-        return indentation + "if (mat == 21024) return " + padding + "80; // Pink Modded Blocks\n"
-                + indentation + "if (mat == 21100) return " + padding + "97; // White Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21102) return " + padding + "43; // Brown Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21104) return " + padding + "70; // Red Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21106) return " + padding + "71; // Orange Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21108) return " + padding + "72; // Yellow Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21110) return " + padding + "73; // Lime Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21112) return " + padding + "74; // Green Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21114) return " + padding + "75; // Cyan Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21116) return " + padding + "76; // Light Blue Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21118) return " + padding + "77; // Blue Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21120) return " + padding + "78; // Purple Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21122) return " + padding + "79; // Magenta Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 21124) return " + padding + "80; // Pink Simply Light - Smart! Blocks\n"
-                + indentation + "if (mat == 30008) return 254; // Tinted Glass";
+    /**
+     * Normalize before Euphoria's decision tree: inserting 211xx cases next to the
+     * native 210xx cases makes them unreachable in the current schema's <21026 branch.
+     * Reusing native voxel colors lets the vanilla lightmap control dimmed intensity.
+     */
+    private static String euphoriaVoxelMaterialRemapping() {
+        return "        // Simply Light - Smart! preserve hue at every emitting power\n"
+                + "        if (mat >= 21100 && mat <= 21124 && mat % 2 == 0) mat -= 100;\n";
+    }
+
+    /** An unlit lamp must not seed the colored-light volume or its extra-light alpha. */
+    private static String euphoriaVoxelOffState() {
+        return "                #ifdef IRIS_FEATURE_BLOCK_EMISSION_ATTRIBUTE\n"
+                + "                    if (mat >= 21100 && mat <= 21124 && mat % 2 == 0 && at_midBlock.w < 0.5) {\n"
+                + "                        voxelData = 1; // Simply Light - Smart! off, standard non-emitting block\n"
+                + "                    }\n"
+                + "                #endif\n";
     }
 
     private static String euphoriaPhotonicsContent(String content) throws IOException {
