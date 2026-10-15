@@ -28,6 +28,9 @@ bin/
 
 ### VS Code ###
 .vscode/
+!.vscode/
+.vscode/*
+!.vscode/tasks.json
 
 ### Mac OS ###
 .DS_Store
