@@ -2,6 +2,12 @@
 
 All notable changes to Simply Light - Smart! are documented in this file.
 
+## [0.7.1] - 2026-10-15
+
+### Fixed
+
+- Fixed clients being rejected when joining a dedicated server running the addon.
+
 ## [0.7.0] - 2026-10-12
 
 ### Added

@@ -9,6 +9,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -22,24 +24,31 @@ public final class ModNetworking {
 
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
-        event.registrar("1")
-                .playToServer(ClearLinkerSelectionPayload.TYPE, ClearLinkerSelectionPayload.STREAM_CODEC,
-                        (payload, context) -> context.enqueueWork(() -> {
-                            if (!(context.player() instanceof ServerPlayer player) || !player.isShiftKeyDown()) {
-                                return;
-                            }
-                            ItemStack stack = player.getMainHandItem();
-                            if (stack.getItem() instanceof SmartLinkerItem && SmartLinkerItem.clearSelection(stack)) {
-                                player.displayClientMessage(
-                                        Component.translatable("message.simply_light_smart.linker.selection_cleared"), true);
-                            }
-                        }))
-                .playToServer(RequestLinkerHighlightsPayload.TYPE, RequestLinkerHighlightsPayload.STREAM_CODEC,
-                        (payload, context) -> context.enqueueWork(() -> {
-                            if (context.player() instanceof ServerPlayer player) {
-                                sendLinkerHighlights(player);
-                            }
-                        }));
+        var registrar = event.registrar("1");
+        registrar.playToServer(ClearLinkerSelectionPayload.TYPE, ClearLinkerSelectionPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (!(context.player() instanceof ServerPlayer player) || !player.isShiftKeyDown()) {
+                        return;
+                    }
+                    ItemStack stack = player.getMainHandItem();
+                    if (stack.getItem() instanceof SmartLinkerItem && SmartLinkerItem.clearSelection(stack)) {
+                        player.displayClientMessage(
+                                Component.translatable("message.simply_light_smart.linker.selection_cleared"), true);
+                    }
+                }));
+        registrar.playToServer(RequestLinkerHighlightsPayload.TYPE, RequestLinkerHighlightsPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof ServerPlayer player) {
+                        sendLinkerHighlights(player);
+                    }
+                }));
+
+        // The dedicated server must advertise this client-bound payload during the
+        // NeoForge handshake. The real handler is registered by the client-only class.
+        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+            registrar.playToClient(LinkerHighlightsPayload.TYPE, LinkerHighlightsPayload.STREAM_CODEC,
+                    (payload, context) -> {});
+        }
     }
 
     private static void sendLinkerHighlights(net.minecraft.server.level.ServerPlayer player) {
